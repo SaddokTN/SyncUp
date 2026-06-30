@@ -1,0 +1,36 @@
+# Dependencies
+vendor/
+node_modules/
+
+# Environment & config (keep secrets safe!)
+.env
+config.local.php
+api/config.php
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Logs & errors
+*.log
+error_log
+php_errors.log
+
+# Database dumps (don't expose your data)
+*.sql
+*.sqlite
+
+# Compiled/cache
+*.cache
+*.tmp
+/cache/
+
+# Uploads (user data shouldn't be in git)
+/uploads/
