@@ -1,4 +1,4 @@
-# WhenWeFree — Find time together
+# SyncUp — Find time together
 
 A full-stack scheduling app where you and your friends mark your available times and instantly see when everyone's free — between **6 AM and 11 PM**, across all 7 days.
 
