@@ -139,8 +139,7 @@ async function enterApp() {
   ]);
 
   if (avail.success) {
-    state.availability = new Set(avail.slots.map(s => `${s.weekday}-${s.start_hour}`));
-    // Convert slot ranges to individual hour cells
+    // Convert slot ranges (start_hour..end_hour) into individual hour cells
     state.availability = new Set();
     avail.slots.forEach(s => {
       for (let h = s.start_hour; h < s.end_hour; h++) {
@@ -302,9 +301,9 @@ async function joinGroup() {
 async function openGroup(group) {
   state.activeGroup = group;
 
-  // Update sidebar active state
-  document.querySelectorAll('.group-item').forEach(el => el.classList.remove('active'));
-  event?.currentTarget?.classList.add('active');
+  // Update sidebar active state (re-render instead of touching the global
+  // `event` object, which isn't reliably available in every browser)
+  renderGroupsSidebar();
 
   setPanel('panel-group');
 
@@ -341,8 +340,11 @@ function renderGroupPanel(group, members, overlapData) {
   members.forEach(m => {
     const chip = document.createElement('div');
     chip.className = 'member-chip';
+    // Spread the string instead of using display_name[0] so multi-byte
+    // characters (e.g. emoji) aren't cut in half, then escape before insertion.
+    const initial = [...m.display_name][0]?.toUpperCase() ?? '?';
     chip.innerHTML = `
-      <div class="member-avatar">${m.display_name[0].toUpperCase()}</div>
+      <div class="member-avatar">${escHtml(initial)}</div>
       <span>${escHtml(m.display_name)}</span>
     `;
     membersDiv.appendChild(chip);
