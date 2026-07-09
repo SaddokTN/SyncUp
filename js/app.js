@@ -13,6 +13,7 @@ const DAYS   = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const DAYS_FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const START_HOUR = 6;
 const END_HOUR   = 23; // display up to 11 PM, cells cover 6:00–22:59
+const HOURS = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i);
 
 // ── App State ─────────────────────────────────
 let state = {
@@ -160,39 +161,37 @@ function renderAvailabilityGrid() {
   container.innerHTML = '';
 
   const grid = document.createElement('div');
-  grid.className = 'time-grid';
+  grid.className = 'time-grid schedule-grid';
+  grid.style.setProperty('--hour-columns', HOURS.length);
 
-  // Header row
   const cornerEl = document.createElement('div');
-  cornerEl.className = 'grid-header time-col';
-  cornerEl.textContent = '';
+  cornerEl.className = 'grid-header day-header';
+  cornerEl.textContent = 'Day';
   grid.appendChild(cornerEl);
 
-  DAYS.forEach(d => {
+  HOURS.forEach(h => {
     const el = document.createElement('div');
-    el.className = 'grid-header';
-    el.textContent = d;
+    el.className = 'grid-header time-col';
+    el.textContent = formatHour(h, true);
     grid.appendChild(el);
   });
 
-  // Hour rows
-  for (let h = START_HOUR; h < END_HOUR; h++) {
-    // Time label
-    const label = document.createElement('div');
-    label.className = 'grid-cell time-label';
-    label.textContent = formatHour(h);
-    grid.appendChild(label);
+  DAYS.forEach((day, d) => {
+    const dayLabel = document.createElement('div');
+    dayLabel.className = 'grid-cell day-label';
+    dayLabel.textContent = day;
+    grid.appendChild(dayLabel);
 
-    // Day cells
-    for (let d = 0; d < 7; d++) {
+    HOURS.forEach(h => {
       const key = `${d}-${h}`;
       const cell = document.createElement('div');
       cell.className = 'grid-cell slot' + (state.availability.has(key) ? ' selected' : '');
       cell.dataset.key = key;
+      cell.title = `${DAYS_FULL[d]} ${formatHour(h)}–${formatHour(h + 1)}`;
       cell.addEventListener('click', toggleSlot);
       grid.appendChild(cell);
-    }
-  }
+    });
+  });
 
   container.appendChild(grid);
 }
@@ -391,42 +390,42 @@ function renderGroupPanel(group, members, overlapData) {
   gridWrap.className = 'grid-container';
 
   const grid = document.createElement('div');
-  grid.className = 'time-grid';
+  grid.className = 'time-grid schedule-grid';
+  grid.style.setProperty('--hour-columns', HOURS.length);
 
-  // Header
   const corner = document.createElement('div');
-  corner.className = 'grid-header time-col';
+  corner.className = 'grid-header day-header';
+  corner.textContent = 'Day';
   grid.appendChild(corner);
-  DAYS.forEach(d => {
+
+  HOURS.forEach(h => {
     const el = document.createElement('div');
-    el.className = 'grid-header';
-    el.textContent = d;
+    el.className = 'grid-header time-col';
+    el.textContent = formatHour(h, true);
     grid.appendChild(el);
   });
 
-  // Rows
-  for (let h = START_HOUR; h < END_HOUR; h++) {
-    const label = document.createElement('div');
-    label.className = 'grid-cell time-label';
-    label.textContent = formatHour(h);
-    grid.appendChild(label);
+  DAYS.forEach((day, d) => {
+    const dayLabel = document.createElement('div');
+    dayLabel.className = 'grid-cell day-label';
+    dayLabel.textContent = day;
+    grid.appendChild(dayLabel);
 
-    for (let d = 0; d < 7; d++) {
+    HOURS.forEach(h => {
       const key = `${d}-${h}`;
       const cell = document.createElement('div');
       if (overlapSet.has(key)) {
         cell.className = 'grid-cell slot overlap';
-        cell.title = `${DAYS_FULL[d]} ${formatHour(h)}–${formatHour(h+1)}: Everyone free!`;
+        cell.title = `${DAYS_FULL[d]} ${formatHour(h)}–${formatHour(h + 1)}: Everyone free!`;
       } else if (state.availability.has(key)) {
         cell.className = 'grid-cell slot selected';
-        cell.title = `${DAYS_FULL[d]} ${formatHour(h)}–${formatHour(h+1)}: You're free`;
+        cell.title = `${DAYS_FULL[d]} ${formatHour(h)}–${formatHour(h + 1)}: You're free`;
       } else {
         cell.className = 'grid-cell slot';
       }
       grid.appendChild(cell);
-    }
-  }
-
+    });
+  });
   gridWrap.appendChild(grid);
   container.appendChild(gridWrap);
 
@@ -457,9 +456,10 @@ function renderGroupPanel(group, members, overlapData) {
 }
 
 // ── Utilities ─────────────────────────────────
-function formatHour(h) {
-  if (h === 0 || h === 24) return '12 AM';
-  if (h === 12) return '12 PM';
+function formatHour(h, compact = false) {
+  if (h === 0 || h === 24) return compact ? '12a' : '12 AM';
+  if (h === 12) return compact ? '12p' : '12 PM';
+  if (compact) return h < 12 ? `${h}a` : `${h - 12}p`;
   return h < 12 ? `${h} AM` : `${h - 12} PM`;
 }
 
