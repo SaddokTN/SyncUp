@@ -17,6 +17,9 @@ switch ($action) {
     case 'list':     handleList();    break;
     case 'members':  handleMembers(); break;
     case 'overlap':  handleOverlap(); break;
+    case 'leave':    handleLeave();   break;
+    case 'delete':   handleDelete();  break;
+    case 'kick':     handleKick();    break;
     default:         jsonError('Unknown action');
 }
 
@@ -181,4 +184,89 @@ function handleOverlap(): void {
         'total_members'     => $total,
         'members_with_data' => count($usersWithData),
     ]);
+}
+
+// Leave a group. The owner can only leave if they're the last member —
+// otherwise they'd abandon the group with no one in charge of it.
+function handleLeave(): void {
+    $user    = requireAuth();
+    $body    = json_decode(file_get_contents('php://input'), true);
+    $groupId = (int)($body['group_id'] ?? 0);
+    if (!$groupId) jsonError('group_id required');
+
+    $db   = db();
+    $stmt = $db->prepare('SELECT owner_id FROM `groups` WHERE id = ?');
+    $stmt->execute([$groupId]);
+    $group = $stmt->fetch();
+    if (!$group) jsonError('Group not found');
+
+    $chk = $db->prepare('SELECT id FROM group_members WHERE group_id = ? AND user_id = ?');
+    $chk->execute([$groupId, $user['id']]);
+    if (!$chk->fetch()) jsonError('Not a member of this group', 403);
+
+    if ((int)$group['owner_id'] === (int)$user['id']) {
+        $count = $db->prepare('SELECT COUNT(*) AS c FROM group_members WHERE group_id = ?');
+        $count->execute([$groupId]);
+        if ((int)$count->fetch()['c'] > 1) {
+            jsonError('As the creator, delete the group instead of leaving, or wait until everyone else has left.');
+        }
+        // Only member left — leaving is the same as deleting the group.
+        $db->prepare('DELETE FROM `groups` WHERE id = ?')->execute([$groupId]);
+        jsonResponse(['success' => true, 'deleted' => true]);
+        return;
+    }
+
+    $db->prepare('DELETE FROM group_members WHERE group_id = ? AND user_id = ?')->execute([$groupId, $user['id']]);
+    jsonResponse(['success' => true, 'deleted' => false]);
+}
+
+// Delete an entire group — only the creator can do this
+function handleDelete(): void {
+    $user    = requireAuth();
+    $body    = json_decode(file_get_contents('php://input'), true);
+    $groupId = (int)($body['group_id'] ?? 0);
+    if (!$groupId) jsonError('group_id required');
+
+    $db   = db();
+    $stmt = $db->prepare('SELECT owner_id FROM `groups` WHERE id = ?');
+    $stmt->execute([$groupId]);
+    $group = $stmt->fetch();
+    if (!$group) jsonError('Group not found');
+
+    if ((int)$group['owner_id'] !== (int)$user['id']) {
+        jsonError('Only the group creator can delete this group', 403);
+    }
+
+    // group_members rows cascade-delete automatically via the FK
+    $db->prepare('DELETE FROM `groups` WHERE id = ?')->execute([$groupId]);
+    jsonResponse(['success' => true]);
+}
+
+// Remove a specific member from a group — only the creator can do this
+function handleKick(): void {
+    $user     = requireAuth();
+    $body     = json_decode(file_get_contents('php://input'), true);
+    $groupId  = (int)($body['group_id'] ?? 0);
+    $targetId = (int)($body['user_id'] ?? 0);
+    if (!$groupId || !$targetId) jsonError('group_id and user_id required');
+
+    $db   = db();
+    $stmt = $db->prepare('SELECT owner_id FROM `groups` WHERE id = ?');
+    $stmt->execute([$groupId]);
+    $group = $stmt->fetch();
+    if (!$group) jsonError('Group not found');
+
+    if ((int)$group['owner_id'] !== (int)$user['id']) {
+        jsonError('Only the group creator can remove members', 403);
+    }
+    if ($targetId === (int)$user['id']) {
+        jsonError('Use "Delete group" instead of removing yourself');
+    }
+
+    $chk = $db->prepare('SELECT id FROM group_members WHERE group_id = ? AND user_id = ?');
+    $chk->execute([$groupId, $targetId]);
+    if (!$chk->fetch()) jsonError('That person is not a member of this group');
+
+    $db->prepare('DELETE FROM group_members WHERE group_id = ? AND user_id = ?')->execute([$groupId, $targetId]);
+    jsonResponse(['success' => true]);
 }

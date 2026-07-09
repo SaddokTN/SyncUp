@@ -198,16 +198,11 @@ h1, h2, h3, h4 {
 .form-group input::placeholder { color: var(--text-mute); }
 
 /* ── Buttons ── */
-button, input, .grid-cell {
-  touch-action: manipulation;
-}
-
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 44px;
   padding: 12px 22px;
   border-radius: var(--radius-sm);
   font-size: 0.9rem;
@@ -267,7 +262,6 @@ button, input, .grid-cell {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 44px;
   padding: 10px 12px;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -289,7 +283,6 @@ button, input, .grid-cell {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 44px;
   padding: 9px 12px;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -341,23 +334,18 @@ button, input, .grid-cell {
 /* ── Time Grid ── */
 .grid-container {
   overflow-x: auto;
-  padding-bottom: 6px;
 }
 
 .time-grid {
   display: grid;
-  gap: 4px;
-  min-width: max-content;
-  align-items: start;
-}
-
-.schedule-grid {
-  grid-template-columns: 90px repeat(var(--hour-columns, 17), 38px);
+  grid-template-columns: 60px repeat(7, 1fr);
+  gap: 2px;
+  min-width: 600px;
 }
 
 .grid-header {
   text-align: center;
-  font-size: 0.74rem;
+  font-size: 0.78rem;
   font-weight: 600;
   font-family: 'Space Grotesk', sans-serif;
   color: var(--text-mute);
@@ -365,47 +353,33 @@ button, input, .grid-cell {
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
-.grid-header.day-header {
-  text-align: left;
-  padding-left: 10px;
-  color: var(--text-main);
-  background: rgba(255,255,255,0.03);
-  border-radius: 6px;
-}
-.grid-header.time-col { text-align: center; min-width: 38px; }
+.grid-header.time-col { text-align: right; padding-right: 10px; }
 
 .grid-cell {
   height: 36px;
-  border-radius: 6px;
+  border-radius: 4px;
   position: relative;
   cursor: pointer;
-  transition: transform var(--transition), background var(--transition), box-shadow var(--transition);
+  transition: background var(--transition);
 }
-.grid-cell.day-label {
+.grid-cell.time-label {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  padding: 0 10px;
-  font-size: 0.8rem;
-  color: var(--text-main);
+  justify-content: flex-end;
+  padding-right: 10px;
+  font-size: 0.72rem;
+  color: var(--text-mute);
   cursor: default;
   pointer-events: none;
-  min-width: 90px;
-  background: rgba(255,255,255,0.03);
 }
 .grid-cell.slot {
   background: var(--navy-soft);
-  border: 1px solid rgba(255,255,255,0.04);
 }
-.grid-cell.slot:hover {
-  background: #2e4a63;
-  transform: translateY(-1px);
-}
+.grid-cell.slot:hover { background: #2e4a63; }
 .grid-cell.slot.selected {
-  background: var(--teal);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2);
+  background: var(--teal-dim);
 }
-.grid-cell.slot.selected:hover { background: #00b096; }
+.grid-cell.slot.selected:hover { background: var(--teal); }
 
 /* Overlap cell (used in group view) */
 .grid-cell.overlap {
@@ -599,6 +573,22 @@ button, input, .grid-cell {
   justify-content: center;
   font-family: 'Space Grotesk', sans-serif;
 }
+.chip-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,107,107,0.15);
+  color: var(--coral);
+  font-size: 0.68rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.chip-remove:hover { background: rgba(255,107,107,0.35); }
 
 /* ── Empty states ── */
 .empty-state {
@@ -631,15 +621,6 @@ button, input, .grid-cell {
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  .app-header {
-    padding: 0 14px;
-    height: 56px;
-  }
-  .header-user {
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 8px;
-  }
   #page-app { flex-direction: column; }
   .sidebar {
     width: 100%;
@@ -650,45 +631,6 @@ button, input, .grid-cell {
     border-right: none;
     border-bottom: 1px solid var(--navy-soft);
   }
-  .sidebar-section { min-width: 120px; flex: 1; }
-  .main-content { padding: 16px 12px 24px; }
-  .panel-header {
-    flex-direction: column;
-    align-items: stretch;
-    margin-bottom: 20px;
-  }
-  .panel-header .btn {
-    width: 100%;
-    justify-content: center;
-  }
-  .card { padding: 20px; }
-  .modal { padding: 22px; }
-  .modal-actions {
-    flex-direction: column-reverse;
-  }
-  .modal-actions .btn {
-    width: 100%;
-  }
-  .schedule-grid {
-    grid-template-columns: 76px repeat(var(--hour-columns, 17), 32px);
-  }
-  .grid-cell {
-    height: 32px;
-  }
-  .grid-cell.day-label {
-    min-width: 76px;
-    font-size: 0.72rem;
-    padding: 0 6px;
-  }
-  .grid-header {
-    font-size: 0.62rem;
-    padding: 6px 2px;
-  }
-  .grid-header.day-header { padding-left: 6px; }
-  .toast-container {
-    left: 12px;
-    right: 12px;
-    bottom: 12px;
-  }
-  .toast { max-width: none; }
+  .sidebar-section { min-width: 120px; }
+  .main-content { padding: 20px 16px; }
 }

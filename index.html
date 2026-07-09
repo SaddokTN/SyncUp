@@ -84,6 +84,9 @@
         <button class="nav-item" data-panel="panel-availability">
           <span class="icon">🗓️</span> My availability
         </button>
+        <button class="nav-item" data-panel="panel-account">
+          <span class="icon">👤</span> Account
+        </button>
       </div>
 
       <div class="sidebar-section">
@@ -130,9 +133,49 @@
               <span class="invite-code" id="group-invite-code" title="Click to copy">——</span>
             </div>
           </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-secondary" id="btn-leave-group">Leave group</button>
+            <button class="btn btn-danger" id="btn-delete-group" style="display:none">Delete group</button>
+          </div>
         </div>
         <div id="group-content">
           <div class="spinner"></div>
+        </div>
+      </div>
+
+      <!-- ── Account Panel ── -->
+      <div class="panel" id="panel-account">
+        <div class="panel-header">
+          <div>
+            <h2>Account</h2>
+            <p>Update your info, or permanently delete your account.</p>
+          </div>
+        </div>
+
+        <div class="card" style="max-width:440px">
+          <div class="form-group">
+            <label>Display name</label>
+            <input type="text" id="account-name" autocomplete="name" />
+          </div>
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="account-username" autocomplete="username" />
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="account-email" autocomplete="email" />
+          </div>
+          <div class="form-error" id="account-error"></div>
+          <button class="btn btn-primary" id="btn-save-account" style="margin-top:8px">Save changes</button>
+        </div>
+
+        <div class="card" style="max-width:440px;margin-top:20px;border-color:rgba(255,107,107,0.3)">
+          <h4 style="margin-bottom:6px">Danger zone</h4>
+          <p style="color:var(--text-mute);font-size:0.85rem;margin-bottom:14px">
+            Deleting your account removes your availability and group memberships for good.
+            Any group you created is handed to another member, or deleted if you're the only one in it.
+          </p>
+          <button class="btn btn-danger" id="btn-delete-account">Delete my account</button>
         </div>
       </div>
 
@@ -171,6 +214,26 @@
     <div class="modal-actions">
       <button class="btn btn-secondary" data-close-modal="modal-join-group">Cancel</button>
       <button class="btn btn-primary" id="btn-join-group">Join group</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete account -->
+<div class="modal-overlay" id="modal-delete-account">
+  <div class="modal">
+    <button class="modal-close" data-close-modal="modal-delete-account">✕</button>
+    <h3>Delete your account?</h3>
+    <p style="color:var(--text-mute);font-size:0.88rem;margin-bottom:16px">
+      This permanently deletes your account and can't be undone. Enter your password to confirm.
+    </p>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="delete-account-password" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+    <div class="form-error" id="delete-account-error"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" data-close-modal="modal-delete-account">Cancel</button>
+      <button class="btn btn-danger" id="btn-confirm-delete-account">Delete account</button>
     </div>
   </div>
 </div>

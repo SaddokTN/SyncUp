@@ -13,7 +13,6 @@ const DAYS   = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const DAYS_FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const START_HOUR = 6;
 const END_HOUR   = 23; // display up to 11 PM, cells cover 6:00–22:59
-const HOURS = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i);
 
 // ── App State ─────────────────────────────────
 let state = {
@@ -132,6 +131,7 @@ async function enterApp() {
   document.getElementById('page-app').classList.add('active');
   document.getElementById('app-header').style.display = 'flex';
   document.getElementById('header-username').textContent = state.user.display_name;
+  populateAccountForm();
 
   // Load availability & groups in parallel
   const [avail, groups] = await Promise.all([
@@ -161,37 +161,39 @@ function renderAvailabilityGrid() {
   container.innerHTML = '';
 
   const grid = document.createElement('div');
-  grid.className = 'time-grid schedule-grid';
-  grid.style.setProperty('--hour-columns', HOURS.length);
+  grid.className = 'time-grid';
 
+  // Header row
   const cornerEl = document.createElement('div');
-  cornerEl.className = 'grid-header day-header';
-  cornerEl.textContent = 'Day';
+  cornerEl.className = 'grid-header time-col';
+  cornerEl.textContent = '';
   grid.appendChild(cornerEl);
 
-  HOURS.forEach(h => {
+  DAYS.forEach(d => {
     const el = document.createElement('div');
-    el.className = 'grid-header time-col';
-    el.textContent = formatHour(h, true);
+    el.className = 'grid-header';
+    el.textContent = d;
     grid.appendChild(el);
   });
 
-  DAYS.forEach((day, d) => {
-    const dayLabel = document.createElement('div');
-    dayLabel.className = 'grid-cell day-label';
-    dayLabel.textContent = day;
-    grid.appendChild(dayLabel);
+  // Hour rows
+  for (let h = START_HOUR; h < END_HOUR; h++) {
+    // Time label
+    const label = document.createElement('div');
+    label.className = 'grid-cell time-label';
+    label.textContent = formatHour(h);
+    grid.appendChild(label);
 
-    HOURS.forEach(h => {
+    // Day cells
+    for (let d = 0; d < 7; d++) {
       const key = `${d}-${h}`;
       const cell = document.createElement('div');
       cell.className = 'grid-cell slot' + (state.availability.has(key) ? ' selected' : '');
       cell.dataset.key = key;
-      cell.title = `${DAYS_FULL[d]} ${formatHour(h)}–${formatHour(h + 1)}`;
       cell.addEventListener('click', toggleSlot);
       grid.appendChild(cell);
-    });
-  });
+    }
+  }
 
   container.appendChild(grid);
 }
@@ -242,6 +244,53 @@ async function saveAvailability() {
     toast(`Saved ${data.saved} time block${data.saved !== 1 ? 's' : ''}`);
   } else {
     toast(data.error, 'error');
+  }
+}
+
+// ── Account ───────────────────────────────────
+function populateAccountForm() {
+  document.getElementById('account-name').value     = state.user.display_name || '';
+  document.getElementById('account-username').value = state.user.username || '';
+  document.getElementById('account-email').value     = state.user.email || '';
+}
+
+async function saveAccount() {
+  const errEl = document.getElementById('account-error');
+  errEl.textContent = '';
+
+  const payload = {
+    display_name: document.getElementById('account-name').value.trim(),
+    username:     document.getElementById('account-username').value.trim(),
+    email:        document.getElementById('account-email').value.trim(),
+  };
+
+  const data = await api(API.auth, { action: 'update' }, payload);
+  if (data.success) {
+    state.user = data.user;
+    document.getElementById('header-username').textContent = state.user.display_name;
+    toast('Account updated');
+  } else {
+    errEl.textContent = data.error;
+  }
+}
+
+async function deleteAccount() {
+  const errEl    = document.getElementById('delete-account-error');
+  const password = document.getElementById('delete-account-password').value;
+  errEl.textContent = '';
+
+  if (!password) { errEl.textContent = 'Enter your password to confirm'; return; }
+
+  const data = await api(API.auth, { action: 'delete' }, { password });
+  if (data.success) {
+    hideModal('modal-delete-account');
+    toast('Account deleted');
+    state = { user: null, availability: new Set(), groups: [], activeGroup: null };
+    document.getElementById('page-app').classList.remove('active');
+    document.getElementById('page-auth').classList.add('active');
+    document.getElementById('app-header').style.display = 'none';
+  } else {
+    errEl.textContent = data.error;
   }
 }
 
@@ -297,6 +346,52 @@ async function joinGroup() {
   }
 }
 
+async function leaveGroup() {
+  const group = state.activeGroup;
+  if (!group) return;
+  if (!confirm(`Leave "${group.name}"? You can rejoin later with the invite code.`)) return;
+
+  const data = await api(API.groups, { action: 'leave' }, { group_id: group.id });
+  if (data.success) {
+    state.groups = state.groups.filter(g => g.id !== group.id);
+    state.activeGroup = null;
+    renderGroupsSidebar();
+    setPanel('panel-availability');
+    toast(`Left "${group.name}"`);
+  } else {
+    toast(data.error, 'error');
+  }
+}
+
+async function deleteGroup() {
+  const group = state.activeGroup;
+  if (!group) return;
+  if (!confirm(`Delete "${group.name}"? This removes it for every member and can't be undone.`)) return;
+
+  const data = await api(API.groups, { action: 'delete' }, { group_id: group.id });
+  if (data.success) {
+    state.groups = state.groups.filter(g => g.id !== group.id);
+    state.activeGroup = null;
+    renderGroupsSidebar();
+    setPanel('panel-availability');
+    toast(`"${group.name}" deleted`);
+  } else {
+    toast(data.error, 'error');
+  }
+}
+
+async function kickMember(group, member) {
+  if (!confirm(`Remove ${member.display_name} from "${group.name}"?`)) return;
+
+  const data = await api(API.groups, { action: 'kick' }, { group_id: group.id, user_id: member.id });
+  if (data.success) {
+    toast(`Removed ${member.display_name}`);
+    openGroup(group); // refresh members + overlap
+  } else {
+    toast(data.error, 'error');
+  }
+}
+
 async function openGroup(group) {
   state.activeGroup = group;
 
@@ -312,6 +407,12 @@ async function openGroup(group) {
   const codeEl = document.getElementById('group-invite-code');
   codeEl.textContent = group.invite_code;
   codeEl.title = 'Click to copy';
+
+  // Creators delete the group instead of leaving it — show only the
+  // button that applies to this user.
+  const isOwner = Number(group.owner_id) === Number(state.user.id);
+  document.getElementById('btn-leave-group').style.display  = isOwner ? 'none' : 'inline-flex';
+  document.getElementById('btn-delete-group').style.display = isOwner ? 'inline-flex' : 'none';
 
   // Show loading
   document.getElementById('group-content').innerHTML = '<div class="spinner"></div>';
@@ -334,6 +435,7 @@ function renderGroupPanel(group, members, overlapData) {
   container.innerHTML = '';
 
   // Members chips
+  const isOwner = Number(group.owner_id) === Number(state.user.id);
   const membersDiv = document.createElement('div');
   membersDiv.className = 'members-list';
   members.forEach(m => {
@@ -342,10 +444,15 @@ function renderGroupPanel(group, members, overlapData) {
     // Spread the string instead of using display_name[0] so multi-byte
     // characters (e.g. emoji) aren't cut in half, then escape before insertion.
     const initial = [...m.display_name][0]?.toUpperCase() ?? '?';
+    const canKick = isOwner && Number(m.id) !== Number(state.user.id);
     chip.innerHTML = `
       <div class="member-avatar">${escHtml(initial)}</div>
       <span>${escHtml(m.display_name)}</span>
+      ${canKick ? `<button class="chip-remove" title="Remove from group">✕</button>` : ''}
     `;
+    if (canKick) {
+      chip.querySelector('.chip-remove').addEventListener('click', () => kickMember(group, m));
+    }
     membersDiv.appendChild(chip);
   });
   container.appendChild(membersDiv);
@@ -390,42 +497,42 @@ function renderGroupPanel(group, members, overlapData) {
   gridWrap.className = 'grid-container';
 
   const grid = document.createElement('div');
-  grid.className = 'time-grid schedule-grid';
-  grid.style.setProperty('--hour-columns', HOURS.length);
+  grid.className = 'time-grid';
 
+  // Header
   const corner = document.createElement('div');
-  corner.className = 'grid-header day-header';
-  corner.textContent = 'Day';
+  corner.className = 'grid-header time-col';
   grid.appendChild(corner);
-
-  HOURS.forEach(h => {
+  DAYS.forEach(d => {
     const el = document.createElement('div');
-    el.className = 'grid-header time-col';
-    el.textContent = formatHour(h, true);
+    el.className = 'grid-header';
+    el.textContent = d;
     grid.appendChild(el);
   });
 
-  DAYS.forEach((day, d) => {
-    const dayLabel = document.createElement('div');
-    dayLabel.className = 'grid-cell day-label';
-    dayLabel.textContent = day;
-    grid.appendChild(dayLabel);
+  // Rows
+  for (let h = START_HOUR; h < END_HOUR; h++) {
+    const label = document.createElement('div');
+    label.className = 'grid-cell time-label';
+    label.textContent = formatHour(h);
+    grid.appendChild(label);
 
-    HOURS.forEach(h => {
+    for (let d = 0; d < 7; d++) {
       const key = `${d}-${h}`;
       const cell = document.createElement('div');
       if (overlapSet.has(key)) {
         cell.className = 'grid-cell slot overlap';
-        cell.title = `${DAYS_FULL[d]} ${formatHour(h)}–${formatHour(h + 1)}: Everyone free!`;
+        cell.title = `${DAYS_FULL[d]} ${formatHour(h)}–${formatHour(h+1)}: Everyone free!`;
       } else if (state.availability.has(key)) {
         cell.className = 'grid-cell slot selected';
-        cell.title = `${DAYS_FULL[d]} ${formatHour(h)}–${formatHour(h + 1)}: You're free`;
+        cell.title = `${DAYS_FULL[d]} ${formatHour(h)}–${formatHour(h+1)}: You're free`;
       } else {
         cell.className = 'grid-cell slot';
       }
       grid.appendChild(cell);
-    });
-  });
+    }
+  }
+
   gridWrap.appendChild(grid);
   container.appendChild(gridWrap);
 
@@ -456,10 +563,9 @@ function renderGroupPanel(group, members, overlapData) {
 }
 
 // ── Utilities ─────────────────────────────────
-function formatHour(h, compact = false) {
-  if (h === 0 || h === 24) return compact ? '12a' : '12 AM';
-  if (h === 12) return compact ? '12p' : '12 PM';
-  if (compact) return h < 12 ? `${h}a` : `${h - 12}p`;
+function formatHour(h) {
+  if (h === 0 || h === 24) return '12 AM';
+  if (h === 12) return '12 PM';
   return h < 12 ? `${h} AM` : `${h - 12} PM`;
 }
 
@@ -514,6 +620,24 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-join-group').addEventListener('click', joinGroup);
   document.getElementById('join-code').addEventListener('keydown', e => {
     if (e.key === 'Enter') joinGroup();
+  });
+
+  // Leave / delete group
+  document.getElementById('btn-leave-group').addEventListener('click', leaveGroup);
+  document.getElementById('btn-delete-group').addEventListener('click', deleteGroup);
+
+  // Account: save changes
+  document.getElementById('btn-save-account').addEventListener('click', saveAccount);
+
+  // Account: delete (opens password-confirmation modal)
+  document.getElementById('btn-delete-account').addEventListener('click', () => {
+    document.getElementById('delete-account-password').value = '';
+    document.getElementById('delete-account-error').textContent = '';
+    showModal('modal-delete-account');
+  });
+  document.getElementById('btn-confirm-delete-account').addEventListener('click', deleteAccount);
+  document.getElementById('delete-account-password').addEventListener('keydown', e => {
+    if (e.key === 'Enter') deleteAccount();
   });
 
   // Modal close buttons
