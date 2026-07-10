@@ -331,60 +331,69 @@ h1, h2, h3, h4 {
 .panel-header h2 { font-size: 1.6rem; }
 .panel-header p { color: var(--text-mute); font-size: 0.9rem; margin-top: 4px; }
 
-/* ── Time Grid ── */
+/* ── Time Grid (hours = columns, days = rows) ── */
 .grid-container {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .time-grid {
   display: grid;
-  grid-template-columns: 60px repeat(7, 1fr);
+  grid-template-columns: 60px repeat(17, 46px);
   gap: 2px;
-  min-width: 600px;
+  width: max-content;
+  user-select: none;
 }
 
-.grid-header {
+.grid-corner {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--navy);
+}
+
+.grid-hour-label {
   text-align: center;
-  font-size: 0.78rem;
+  font-size: 0.62rem;
   font-weight: 600;
   font-family: 'Space Grotesk', sans-serif;
   color: var(--text-mute);
-  padding: 8px 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  padding: 8px 2px;
 }
-.grid-header.time-col { text-align: right; padding-right: 10px; }
 
-.grid-cell {
-  height: 36px;
-  border-radius: 4px;
-  position: relative;
-  cursor: pointer;
-  transition: background var(--transition);
-}
-.grid-cell.time-label {
+.grid-day-label {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--navy);
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  padding-right: 10px;
-  font-size: 0.72rem;
-  color: var(--text-mute);
+  padding-left: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: 'Space Grotesk', sans-serif;
+  color: var(--text-main);
   cursor: default;
-  pointer-events: none;
 }
-.grid-cell.slot {
+
+.grid-cell {
+  height: 40px;
+  border-radius: 4px;
+  cursor: pointer;
   background: var(--navy-soft);
+  transition: background var(--transition);
 }
-.grid-cell.slot:hover { background: #2e4a63; }
-.grid-cell.slot.selected {
+.grid-cell:hover { background: #2e4a63; }
+.grid-cell.selected {
   background: var(--teal-dim);
 }
-.grid-cell.slot.selected:hover { background: var(--teal); }
+.grid-cell.selected:hover { background: var(--teal); }
 
-/* Overlap cell (used in group view) */
+/* Overlap cell (used in group view, read-only) */
 .grid-cell.overlap {
   background: var(--teal);
   position: relative;
+  cursor: default;
 }
 .grid-cell.overlap::after {
   content: '';

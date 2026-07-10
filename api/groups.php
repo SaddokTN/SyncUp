@@ -34,7 +34,7 @@ function handleCreate(): void {
     $code = generateInviteCode();
     // Ensure unique code
     while (true) {
-        $chk = $db->prepare('SELECT id FROM groups WHERE invite_code = ?');
+        $chk = $db->prepare('SELECT id FROM `groups` WHERE invite_code = ?');
         $chk->execute([$code]);
         if (!$chk->fetch()) break;
         $code = generateInviteCode();

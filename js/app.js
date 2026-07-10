@@ -163,50 +163,99 @@ function renderAvailabilityGrid() {
   const grid = document.createElement('div');
   grid.className = 'time-grid';
 
-  // Header row
-  const cornerEl = document.createElement('div');
-  cornerEl.className = 'grid-header time-col';
-  cornerEl.textContent = '';
-  grid.appendChild(cornerEl);
+  // Header row: blank corner + one range label per hour column
+  const corner = document.createElement('div');
+  corner.className = 'grid-corner';
+  grid.appendChild(corner);
 
-  DAYS.forEach(d => {
-    const el = document.createElement('div');
-    el.className = 'grid-header';
-    el.textContent = d;
-    grid.appendChild(el);
-  });
-
-  // Hour rows
   for (let h = START_HOUR; h < END_HOUR; h++) {
-    // Time label
-    const label = document.createElement('div');
-    label.className = 'grid-cell time-label';
-    label.textContent = formatHour(h);
-    grid.appendChild(label);
+    const hEl = document.createElement('div');
+    hEl.className = 'grid-hour-label';
+    hEl.textContent = formatHourRange(h);
+    grid.appendChild(hEl);
+  }
 
-    // Day cells
-    for (let d = 0; d < 7; d++) {
+  // One row per day
+  for (let d = 0; d < 7; d++) {
+    const dayLabel = document.createElement('div');
+    dayLabel.className = 'grid-day-label';
+    dayLabel.textContent = DAYS[d];
+    grid.appendChild(dayLabel);
+
+    for (let h = START_HOUR; h < END_HOUR; h++) {
       const key = `${d}-${h}`;
       const cell = document.createElement('div');
-      cell.className = 'grid-cell slot' + (state.availability.has(key) ? ' selected' : '');
+      cell.className = 'grid-cell' + (state.availability.has(key) ? ' selected' : '');
       cell.dataset.key = key;
-      cell.addEventListener('click', toggleSlot);
+      cell.title = `${DAYS_FULL[d]}, ${formatHour(h)} – ${formatHour(h + 1)}`;
       grid.appendChild(cell);
     }
   }
 
   container.appendChild(grid);
+  wireDragSelect(grid);
 }
 
-function toggleSlot(e) {
-  const key = e.currentTarget.dataset.key;
-  if (state.availability.has(key)) {
-    state.availability.delete(key);
-    e.currentTarget.classList.remove('selected');
-  } else {
-    state.availability.add(key);
-    e.currentTarget.classList.add('selected');
+// Lets you toggle cells three ways: a single click, or a click-and-drag to
+// paint a whole range at once (mouse only — on touch, dragging is reserved
+// for horizontally scrolling through the hours, so a touch only toggles a
+// cell if it didn't move, i.e. a genuine tap rather than a swipe).
+// State lives outside the function so re-renders (e.g. logging out and back
+// in) don't stack up duplicate window-level listeners.
+const dragState = { mouseDragging: false, mouseMode: true, touchStart: null };
+let dragListenersWired = false;
+
+function wireDragSelect(grid) {
+  function setCell(el, on) {
+    if (!el || !el.classList.contains('grid-cell')) return;
+    const key = el.dataset.key;
+    if (on) {
+      state.availability.add(key);
+      el.classList.add('selected');
+    } else {
+      state.availability.delete(key);
+      el.classList.remove('selected');
+    }
   }
+
+  grid.addEventListener('pointerdown', e => {
+    const el = e.target.closest('.grid-cell');
+    if (!el) return;
+
+    if (e.pointerType === 'mouse') {
+      dragState.mouseDragging = true;
+      dragState.mouseMode = !state.availability.has(el.dataset.key);
+      setCell(el, dragState.mouseMode);
+      e.preventDefault();
+    } else {
+      dragState.touchStart = { x: e.clientX, y: e.clientY, el };
+    }
+  });
+
+  if (dragListenersWired) return;
+  dragListenersWired = true;
+
+  window.addEventListener('pointermove', e => {
+    if (!dragState.mouseDragging) return;
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    if (el) setCell(el.closest('.grid-cell'), dragState.mouseMode);
+  });
+
+  window.addEventListener('pointerup', e => {
+    dragState.mouseDragging = false;
+    if (dragState.touchStart) {
+      const moved = Math.hypot(e.clientX - dragState.touchStart.x, e.clientY - dragState.touchStart.y);
+      if (moved < 10) {
+        setCell(dragState.touchStart.el, !state.availability.has(dragState.touchStart.el.dataset.key));
+      }
+      dragState.touchStart = null;
+    }
+  });
+
+  window.addEventListener('pointercancel', () => {
+    dragState.mouseDragging = false;
+    dragState.touchStart = null;
+  });
 }
 
 async function saveAvailability() {
@@ -499,35 +548,37 @@ function renderGroupPanel(group, members, overlapData) {
   const grid = document.createElement('div');
   grid.className = 'time-grid';
 
-  // Header
+  // Header row: blank corner + one range label per hour column
   const corner = document.createElement('div');
-  corner.className = 'grid-header time-col';
+  corner.className = 'grid-corner';
   grid.appendChild(corner);
-  DAYS.forEach(d => {
-    const el = document.createElement('div');
-    el.className = 'grid-header';
-    el.textContent = d;
-    grid.appendChild(el);
-  });
 
-  // Rows
   for (let h = START_HOUR; h < END_HOUR; h++) {
-    const label = document.createElement('div');
-    label.className = 'grid-cell time-label';
-    label.textContent = formatHour(h);
-    grid.appendChild(label);
+    const hEl = document.createElement('div');
+    hEl.className = 'grid-hour-label';
+    hEl.textContent = formatHourRange(h);
+    grid.appendChild(hEl);
+  }
 
-    for (let d = 0; d < 7; d++) {
+  // One row per day
+  for (let d = 0; d < 7; d++) {
+    const dayLabel = document.createElement('div');
+    dayLabel.className = 'grid-day-label';
+    dayLabel.textContent = DAYS[d];
+    grid.appendChild(dayLabel);
+
+    for (let h = START_HOUR; h < END_HOUR; h++) {
       const key = `${d}-${h}`;
       const cell = document.createElement('div');
       if (overlapSet.has(key)) {
-        cell.className = 'grid-cell slot overlap';
-        cell.title = `${DAYS_FULL[d]} ${formatHour(h)}–${formatHour(h+1)}: Everyone free!`;
+        cell.className = 'grid-cell overlap';
+        cell.title = `${DAYS_FULL[d]}, ${formatHour(h)} – ${formatHour(h + 1)}: everyone free!`;
       } else if (state.availability.has(key)) {
-        cell.className = 'grid-cell slot selected';
-        cell.title = `${DAYS_FULL[d]} ${formatHour(h)}–${formatHour(h+1)}: You're free`;
+        cell.className = 'grid-cell selected';
+        cell.title = `${DAYS_FULL[d]}, ${formatHour(h)} – ${formatHour(h + 1)}: you're free`;
       } else {
-        cell.className = 'grid-cell slot';
+        cell.className = 'grid-cell';
+        cell.title = `${DAYS_FULL[d]}, ${formatHour(h)} – ${formatHour(h + 1)}`;
       }
       grid.appendChild(cell);
     }
@@ -567,6 +618,10 @@ function formatHour(h) {
   if (h === 0 || h === 24) return '12 AM';
   if (h === 12) return '12 PM';
   return h < 12 ? `${h} AM` : `${h - 12} PM`;
+}
+
+function formatHourRange(h) {
+  return `${h} - ${h + 1}`;
 }
 
 function escHtml(str) {
