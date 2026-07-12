@@ -33,13 +33,21 @@
 
 /* ── Reset ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 16px; scroll-behavior: smooth; }
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+  max-width: 100%;
+}
 body {
   font-family: 'Inter', sans-serif;
   background: var(--navy);
   color: var(--text-main);
   min-height: 100vh;
   line-height: 1.6;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* ── Typography ── */
@@ -50,20 +58,29 @@ h1, h2, h3, h4 {
 }
 
 /* ── Layout ── */
-.app { display: flex; flex-direction: column; min-height: 100vh; }
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
 
 /* ── Header ── */
 .app-header {
   background: var(--navy-mid);
   border-bottom: 1px solid var(--navy-soft);
   padding: 0 24px;
-  height: 60px;
+  min-height: 60px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   position: sticky;
   top: 0;
   z-index: 100;
+  flex-wrap: wrap;
 }
 
 .logo {
@@ -81,6 +98,7 @@ h1, h2, h3, h4 {
   gap: 12px;
   font-size: 0.875rem;
   color: var(--text-mute);
+  flex-wrap: wrap;
 }
 .header-user strong { color: var(--text-main); font-size: 0.9rem; }
 .btn-ghost {
@@ -141,6 +159,7 @@ h1, h2, h3, h4 {
   align-items: center;
   justify-content: center;
   padding: 40px 20px;
+  overflow-x: hidden;
 }
 
 .auth-box {
@@ -269,6 +288,9 @@ h1, h2, h3, h4 {
 /* ── Main app layout ── */
 #page-app {
   flex-direction: row;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .sidebar {
@@ -349,7 +371,9 @@ h1, h2, h3, h4 {
 .main-content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 32px;
+  min-width: 0;
 }
 
 .panel { display: none; }
@@ -665,6 +689,17 @@ h1, h2, h3, h4 {
 /* ── Responsive ── */
 @media (max-width: 768px) {
   #page-app { flex-direction: column; }
+  .app-header {
+    padding: 12px 14px;
+    align-items: center;
+  }
+  .header-user {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .header-user .btn-ghost {
+    margin-left: 0;
+  }
   .sidebar {
     width: 100%;
     flex-direction: row;
@@ -675,5 +710,12 @@ h1, h2, h3, h4 {
     border-bottom: 1px solid var(--navy-soft);
   }
   .sidebar-section { min-width: 120px; }
-  .main-content { padding: 20px 16px; }
+  .main-content {
+    padding: 20px 16px;
+    overflow-x: hidden;
+  }
+  .panel-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }

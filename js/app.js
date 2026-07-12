@@ -186,18 +186,22 @@ const ERROR_FR = {
 let lang = localStorage.getItem('syncup_lang')
   || (navigator.language?.toLowerCase().startsWith('fr') ? 'fr' : 'en');
 
+function getTranslation(key) {
+  return I18N[lang]?.[key] ?? I18N.en[key];
+}
+
 function t(key) {
-  const val = I18N[lang]?.[key];
-  return typeof val === 'string' ? val : (I18N.en[key] ?? key);
+  const val = getTranslation(key);
+  return typeof val === 'string' ? val : (val ?? key);
 }
 
 function tf(key, ...args) {
-  const fn = I18N[lang]?.[key] ?? I18N.en[key];
+  const fn = getTranslation(key);
   return typeof fn === 'function' ? fn(...args) : String(fn ?? key);
 }
 
-function currentDays() { return t('days'); }
-function currentDaysFull() { return t('daysFull'); }
+function currentDays() { return getTranslation('days') ?? I18N.en.days; }
+function currentDaysFull() { return getTranslation('daysFull') ?? I18N.en.daysFull; }
 
 function translateError(msg) {
   return (lang === 'fr' && ERROR_FR[msg]) ? ERROR_FR[msg] : msg;
