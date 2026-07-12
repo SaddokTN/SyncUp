@@ -95,6 +95,40 @@ h1, h2, h3, h4 {
 }
 .btn-ghost:hover { border-color: var(--teal); color: var(--teal); }
 
+/* ── Language switch ── */
+.lang-switch {
+  display: flex;
+  gap: 2px;
+  background: var(--navy);
+  border: 1px solid var(--navy-soft);
+  border-radius: 20px;
+  padding: 2px;
+}
+#lang-switch-auth {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 50;
+}
+.lang-btn {
+  border: none;
+  background: none;
+  color: var(--text-mute);
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: 'Space Grotesk', sans-serif;
+  padding: 5px 11px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: var(--transition);
+  letter-spacing: 0.02em;
+}
+.lang-btn:hover { color: var(--text-main); }
+.lang-btn.active {
+  background: var(--teal);
+  color: var(--text-dark);
+}
+
 /* ── Page container ── */
 .page {
   display: none;

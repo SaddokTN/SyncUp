@@ -14,37 +14,45 @@
   <header class="app-header" id="app-header" style="display:none">
     <div class="logo">Sync<span>Up</span></div>
     <div class="header-user">
+      <div class="lang-switch">
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="fr">FR</button>
+      </div>
       <strong id="header-username"></strong>
-      <button class="btn-ghost" id="btn-logout">Sign out</button>
+      <button class="btn-ghost" id="btn-logout" data-i18n="btnSignOut">Sign out</button>
     </div>
   </header>
 
   <!-- ── Auth Page ────────────────────────── -->
   <div class="page" id="page-auth">
+    <div class="lang-switch" id="lang-switch-auth">
+      <button class="lang-btn" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="fr">FR</button>
+    </div>
     <div class="auth-box">
       <div class="auth-hero">
         <div class="logo-big">Sync<span>Up</span></div>
-        <p>Find the times that work for everyone</p>
+        <p data-i18n="tagline">Find the times that work for everyone</p>
       </div>
 
       <div class="auth-tabs">
-        <button class="auth-tab active" data-tab="login">Sign in</button>
-        <button class="auth-tab" data-tab="register">Create account</button>
+        <button class="auth-tab active" data-tab="login" data-i18n="tabSignIn">Sign in</button>
+        <button class="auth-tab" data-tab="register" data-i18n="tabCreateAccount">Create account</button>
       </div>
 
       <!-- Login form -->
       <div id="form-login" class="auth-form">
         <div class="card">
           <div class="form-group">
-            <label>Username</label>
+            <label data-i18n="labelUsername">Username</label>
             <input type="text" id="login-username" placeholder="your_username" autocomplete="username" />
           </div>
           <div class="form-group">
-            <label>Password</label>
+            <label data-i18n="labelPassword">Password</label>
             <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" />
           </div>
           <div class="form-error" id="login-error"></div>
-          <button class="btn btn-primary btn-full" id="btn-login" style="margin-top:8px">Sign in</button>
+          <button class="btn btn-primary btn-full" id="btn-login" data-i18n="btnSignIn" style="margin-top:8px">Sign in</button>
         </div>
       </div>
 
@@ -52,23 +60,23 @@
       <div id="form-register" class="auth-form" style="display:none">
         <div class="card">
           <div class="form-group">
-            <label>Display name</label>
+            <label data-i18n="labelDisplayName">Display name</label>
             <input type="text" id="reg-name" placeholder="Alex Smith" autocomplete="name" />
           </div>
           <div class="form-group">
-            <label>Username</label>
+            <label data-i18n="labelUsername">Username</label>
             <input type="text" id="reg-username" placeholder="alex_smith" autocomplete="username" />
           </div>
           <div class="form-group">
-            <label>Email</label>
+            <label data-i18n="labelEmail">Email</label>
             <input type="email" id="reg-email" placeholder="alex@email.com" autocomplete="email" />
           </div>
           <div class="form-group">
-            <label>Password <span style="color:var(--text-mute);font-weight:400">(min. 6 chars)</span></label>
+            <label><span data-i18n="labelPassword">Password</span> <span data-i18n="minChars" style="color:var(--text-mute);font-weight:400">(min. 6 chars)</span></label>
             <input type="password" id="reg-password" placeholder="••••••••" autocomplete="new-password" />
           </div>
           <div class="form-error" id="register-error"></div>
-          <button class="btn btn-primary btn-full" id="btn-register" style="margin-top:8px">Create account</button>
+          <button class="btn btn-primary btn-full" id="btn-register" data-i18n="btnCreateAccount" style="margin-top:8px">Create account</button>
         </div>
       </div>
     </div>
@@ -80,25 +88,25 @@
     <!-- Sidebar -->
     <nav class="sidebar">
       <div class="sidebar-section">
-        <h3>Me</h3>
+        <h3 data-i18n="sectionMe">Me</h3>
         <button class="nav-item" data-panel="panel-availability">
-          <span class="icon">🗓️</span> My availability
+          <span class="icon">🗓️</span> <span data-i18n="navAvailability">My availability</span>
         </button>
         <button class="nav-item" data-panel="panel-account">
-          <span class="icon">👤</span> Account
+          <span class="icon">👤</span> <span data-i18n="navAccount">Account</span>
         </button>
       </div>
 
       <div class="sidebar-section">
-        <h3>Groups</h3>
+        <h3 data-i18n="sectionGroups">Groups</h3>
         <div class="group-list" id="group-list">
           <!-- rendered by JS -->
         </div>
         <button class="nav-item" id="btn-open-create" style="margin-top:6px">
-          <span class="icon">＋</span> New group
+          <span class="icon">＋</span> <span data-i18n="navNewGroup">New group</span>
         </button>
         <button class="nav-item" id="btn-open-join">
-          <span class="icon">🔗</span> Join with code
+          <span class="icon">🔗</span> <span data-i18n="navJoinCode">Join with code</span>
         </button>
       </div>
     </nav>
@@ -110,10 +118,10 @@
       <div class="panel" id="panel-availability">
         <div class="panel-header">
           <div>
-            <h2>My availability</h2>
-            <p>Click cells to mark when you're free (6 AM – 11 PM). Your friends will see overlaps.</p>
+            <h2 data-i18n="availTitle">My availability</h2>
+            <p data-i18n="availDesc">Click cells to mark when you're free (6 AM – 11 PM). Your friends will see overlaps.</p>
           </div>
-          <button class="btn btn-primary" id="btn-save-availability">Save availability</button>
+          <button class="btn btn-primary" id="btn-save-availability" data-i18n="btnSaveAvailability">Save availability</button>
         </div>
 
         <div class="grid-container">
@@ -127,15 +135,15 @@
       <div class="panel" id="panel-group">
         <div class="panel-header">
           <div>
-            <h2 id="group-title">Group</h2>
+            <h2 id="group-title" data-i18n="groupDefaultTitle">Group</h2>
             <div style="display:flex;align-items:center;gap:10px;margin-top:8px">
-              <span style="font-size:0.82rem;color:var(--text-mute)">Invite code:</span>
-              <span class="invite-code" id="group-invite-code" title="Click to copy">——</span>
+              <span style="font-size:0.82rem;color:var(--text-mute)" data-i18n="inviteCodeLabel">Invite code:</span>
+              <span class="invite-code" id="group-invite-code">——</span>
             </div>
           </div>
           <div style="display:flex;gap:10px">
-            <button class="btn btn-secondary" id="btn-leave-group">Leave group</button>
-            <button class="btn btn-danger" id="btn-delete-group" style="display:none">Delete group</button>
+            <button class="btn btn-secondary" id="btn-leave-group" data-i18n="btnLeaveGroup">Leave group</button>
+            <button class="btn btn-danger" id="btn-delete-group" data-i18n="btnDeleteGroup" style="display:none">Delete group</button>
           </div>
         </div>
         <div id="group-content">
@@ -147,35 +155,35 @@
       <div class="panel" id="panel-account">
         <div class="panel-header">
           <div>
-            <h2>Account</h2>
-            <p>Update your info, or permanently delete your account.</p>
+            <h2 data-i18n="accountTitle">Account</h2>
+            <p data-i18n="accountDesc">Update your info, or permanently delete your account.</p>
           </div>
         </div>
 
         <div class="card" style="max-width:440px">
           <div class="form-group">
-            <label>Display name</label>
+            <label data-i18n="labelDisplayName">Display name</label>
             <input type="text" id="account-name" autocomplete="name" />
           </div>
           <div class="form-group">
-            <label>Username</label>
+            <label data-i18n="labelUsername">Username</label>
             <input type="text" id="account-username" autocomplete="username" />
           </div>
           <div class="form-group">
-            <label>Email</label>
+            <label data-i18n="labelEmail">Email</label>
             <input type="email" id="account-email" autocomplete="email" />
           </div>
           <div class="form-error" id="account-error"></div>
-          <button class="btn btn-primary" id="btn-save-account" style="margin-top:8px">Save changes</button>
+          <button class="btn btn-primary" id="btn-save-account" data-i18n="btnSaveChanges" style="margin-top:8px">Save changes</button>
         </div>
 
         <div class="card" style="max-width:440px;margin-top:20px;border-color:rgba(255,107,107,0.3)">
-          <h4 style="margin-bottom:6px">Danger zone</h4>
-          <p style="color:var(--text-mute);font-size:0.85rem;margin-bottom:14px">
+          <h4 data-i18n="dangerZone" style="margin-bottom:6px">Danger zone</h4>
+          <p data-i18n="dangerZoneDesc" style="color:var(--text-mute);font-size:0.85rem;margin-bottom:14px">
             Deleting your account removes your availability and group memberships for good.
             Any group you created is handed to another member, or deleted if you're the only one in it.
           </p>
-          <button class="btn btn-danger" id="btn-delete-account">Delete my account</button>
+          <button class="btn btn-danger" id="btn-delete-account" data-i18n="btnDeleteAccount">Delete my account</button>
         </div>
       </div>
 
@@ -190,14 +198,14 @@
 <div class="modal-overlay" id="modal-create-group">
   <div class="modal">
     <button class="modal-close" data-close-modal="modal-create-group">✕</button>
-    <h3>Create a group</h3>
+    <h3 data-i18n="modalCreateGroupTitle">Create a group</h3>
     <div class="form-group">
-      <label>Group name</label>
+      <label data-i18n="labelGroupName">Group name</label>
       <input type="text" id="new-group-name" placeholder="Weekend crew, Book club…" />
     </div>
     <div class="modal-actions">
-      <button class="btn btn-secondary" data-close-modal="modal-create-group">Cancel</button>
-      <button class="btn btn-primary" id="btn-create-group">Create group</button>
+      <button class="btn btn-secondary" data-close-modal="modal-create-group" data-i18n="btnCancel">Cancel</button>
+      <button class="btn btn-primary" id="btn-create-group" data-i18n="btnCreateGroup">Create group</button>
     </div>
   </div>
 </div>
@@ -206,14 +214,14 @@
 <div class="modal-overlay" id="modal-join-group">
   <div class="modal">
     <button class="modal-close" data-close-modal="modal-join-group">✕</button>
-    <h3>Join a group</h3>
+    <h3 data-i18n="modalJoinGroupTitle">Join a group</h3>
     <div class="form-group">
-      <label>Invite code</label>
+      <label data-i18n="labelInviteCode">Invite code</label>
       <input type="text" id="join-code" placeholder="ABCD1234" style="text-transform:uppercase;letter-spacing:2px" maxlength="12" />
     </div>
     <div class="modal-actions">
-      <button class="btn btn-secondary" data-close-modal="modal-join-group">Cancel</button>
-      <button class="btn btn-primary" id="btn-join-group">Join group</button>
+      <button class="btn btn-secondary" data-close-modal="modal-join-group" data-i18n="btnCancel">Cancel</button>
+      <button class="btn btn-primary" id="btn-join-group" data-i18n="btnJoinGroup">Join group</button>
     </div>
   </div>
 </div>
@@ -222,18 +230,18 @@
 <div class="modal-overlay" id="modal-delete-account">
   <div class="modal">
     <button class="modal-close" data-close-modal="modal-delete-account">✕</button>
-    <h3>Delete your account?</h3>
-    <p style="color:var(--text-mute);font-size:0.88rem;margin-bottom:16px">
+    <h3 data-i18n="modalDeleteAccountTitle">Delete your account?</h3>
+    <p data-i18n="deleteAccountWarning" style="color:var(--text-mute);font-size:0.88rem;margin-bottom:16px">
       This permanently deletes your account and can't be undone. Enter your password to confirm.
     </p>
     <div class="form-group">
-      <label>Password</label>
+      <label data-i18n="labelPassword">Password</label>
       <input type="password" id="delete-account-password" placeholder="••••••••" autocomplete="current-password" />
     </div>
     <div class="form-error" id="delete-account-error"></div>
     <div class="modal-actions">
-      <button class="btn btn-secondary" data-close-modal="modal-delete-account">Cancel</button>
-      <button class="btn btn-danger" id="btn-confirm-delete-account">Delete account</button>
+      <button class="btn btn-secondary" data-close-modal="modal-delete-account" data-i18n="btnCancel">Cancel</button>
+      <button class="btn btn-danger" id="btn-confirm-delete-account" data-i18n="btnDeleteAccountConfirm">Delete account</button>
     </div>
   </div>
 </div>

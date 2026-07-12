@@ -1,6 +1,6 @@
 /* ============================================
    SyncUp — Main Application JS
-   Handles: auth, availability grid, groups, overlap
+   Handles: auth, availability grid, groups, overlap, i18n
    ============================================ */
 
 const API = {
@@ -9,10 +9,221 @@ const API = {
   groups:       'api/groups.php',
 };
 
-const DAYS   = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const DAYS_FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const START_HOUR = 6;
 const END_HOUR   = 23; // display up to 11 PM, cells cover 6:00–22:59
+
+// ── Translations ──────────────────────────────
+// Plain strings are looked up with t('key'). Values that are functions take
+// arguments and are looked up with tf('key', ...args) — used for messages
+// that need a name/number plugged in, since English and French don't always
+// put the pieces in the same order or pluralize the same way.
+const I18N = {
+  en: {
+    days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    daysFull: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+    tagline: 'Find the times that work for everyone',
+    tabSignIn: 'Sign in',
+    tabCreateAccount: 'Create account',
+    labelUsername: 'Username',
+    labelPassword: 'Password',
+    labelDisplayName: 'Display name',
+    labelEmail: 'Email',
+    minChars: '(min. 6 chars)',
+    btnSignIn: 'Sign in',
+    btnCreateAccount: 'Create account',
+    btnSignOut: 'Sign out',
+    sectionMe: 'Me',
+    navAvailability: 'My availability',
+    navAccount: 'Account',
+    sectionGroups: 'Groups',
+    navNewGroup: 'New group',
+    navJoinCode: 'Join with code',
+    availTitle: 'My availability',
+    availDesc: "Click cells to mark when you're free (6 AM – 11 PM). Your friends will see overlaps.",
+    btnSaveAvailability: 'Save availability',
+    savingText: 'Saving…',
+    groupDefaultTitle: 'Group',
+    inviteCodeLabel: 'Invite code:',
+    clickToCopy: 'Click to copy',
+    btnLeaveGroup: 'Leave group',
+    btnDeleteGroup: 'Delete group',
+    removeFromGroup: 'Remove from group',
+    legendNotFree: 'Not free',
+    legendYouFree: "You're free",
+    legendEveryoneFree: "Everyone's free",
+    sharedWindows: 'Shared windows',
+    noOverlap: 'No overlapping free slots found. Try expanding your availability!',
+    accountTitle: 'Account',
+    accountDesc: 'Update your info, or permanently delete your account.',
+    btnSaveChanges: 'Save changes',
+    dangerZone: 'Danger zone',
+    dangerZoneDesc: "Deleting your account removes your availability and group memberships for good. Any group you created is handed to another member, or deleted if you're the only one in it.",
+    btnDeleteAccount: 'Delete my account',
+    modalCreateGroupTitle: 'Create a group',
+    labelGroupName: 'Group name',
+    btnCancel: 'Cancel',
+    btnCreateGroup: 'Create group',
+    modalJoinGroupTitle: 'Join a group',
+    labelInviteCode: 'Invite code',
+    btnJoinGroup: 'Join group',
+    modalDeleteAccountTitle: 'Delete your account?',
+    deleteAccountWarning: "This permanently deletes your account and can't be undone. Enter your password to confirm.",
+    btnDeleteAccountConfirm: 'Delete account',
+    enterPasswordConfirm: 'Enter your password to confirm',
+    accountUpdated: 'Account updated',
+    accountDeleted: 'Account deleted',
+    inviteCopied: 'Invite code copied!',
+    savedBlocks:        n => `Saved ${n} time block${n !== 1 ? 's' : ''}`,
+    groupCreated:        (name, code) => `Group "${name}" created! Code: ${code}`,
+    joinedGroup:          name => `Joined "${name}"!`,
+    leftGroup:            name => `Left "${name}"`,
+    groupDeletedMsg:      name => `"${name}" deleted`,
+    removedMember:        name => `Removed ${name}`,
+    confirmLeave:         name => `Leave "${name}"? You can rejoin later with the invite code.`,
+    confirmDeleteGroup:   name => `Delete "${name}"? This removes it for every member and can't be undone.`,
+    confirmKick:          (member, group) => `Remove ${member} from "${group}"?`,
+    membersProgress:      (withN, total) => `<strong>${withN} of ${total} members</strong> have added their availability. Waiting on the rest to see full overlap.`,
+    membersComplete:      (total, count) => `All <strong>${total} members</strong> have set their availability. Found <strong>${count} shared time block${count !== 1 ? 's' : ''}</strong>.`,
+  },
+  fr: {
+    days: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
+    daysFull: ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'],
+    tagline: 'Trouvez les moments qui conviennent à tout le monde',
+    tabSignIn: 'Connexion',
+    tabCreateAccount: 'Créer un compte',
+    labelUsername: "Nom d'utilisateur",
+    labelPassword: 'Mot de passe',
+    labelDisplayName: 'Nom affiché',
+    labelEmail: 'E-mail',
+    minChars: '(6 caractères min.)',
+    btnSignIn: 'Se connecter',
+    btnCreateAccount: 'Créer un compte',
+    btnSignOut: 'Déconnexion',
+    sectionMe: 'Moi',
+    navAvailability: 'Mes disponibilités',
+    navAccount: 'Compte',
+    sectionGroups: 'Groupes',
+    navNewGroup: 'Nouveau groupe',
+    navJoinCode: 'Rejoindre avec un code',
+    availTitle: 'Mes disponibilités',
+    availDesc: 'Cliquez sur les cases pour indiquer vos disponibilités (6 h – 23 h). Vos amis verront les chevauchements.',
+    btnSaveAvailability: 'Enregistrer',
+    savingText: 'Enregistrement…',
+    groupDefaultTitle: 'Groupe',
+    inviteCodeLabel: "Code d'invitation :",
+    clickToCopy: 'Cliquez pour copier',
+    btnLeaveGroup: 'Quitter le groupe',
+    btnDeleteGroup: 'Supprimer le groupe',
+    removeFromGroup: 'Retirer du groupe',
+    legendNotFree: 'Indisponible',
+    legendYouFree: 'Vous êtes disponible',
+    legendEveryoneFree: 'Tout le monde est disponible',
+    sharedWindows: 'Créneaux communs',
+    noOverlap: "Aucun créneau commun trouvé. Essayez d'élargir vos disponibilités !",
+    accountTitle: 'Compte',
+    accountDesc: 'Modifiez vos informations ou supprimez définitivement votre compte.',
+    btnSaveChanges: 'Enregistrer les modifications',
+    dangerZone: 'Zone de danger',
+    dangerZoneDesc: "La suppression de votre compte efface définitivement vos disponibilités et vos adhésions aux groupes. Tout groupe que vous avez créé est transmis à un autre membre, ou supprimé si vous en êtes le seul membre.",
+    btnDeleteAccount: 'Supprimer mon compte',
+    modalCreateGroupTitle: 'Créer un groupe',
+    labelGroupName: 'Nom du groupe',
+    btnCancel: 'Annuler',
+    btnCreateGroup: 'Créer le groupe',
+    modalJoinGroupTitle: 'Rejoindre un groupe',
+    labelInviteCode: "Code d'invitation",
+    btnJoinGroup: 'Rejoindre',
+    modalDeleteAccountTitle: 'Supprimer votre compte ?',
+    deleteAccountWarning: 'Cette action supprime définitivement votre compte et ne peut pas être annulée. Entrez votre mot de passe pour confirmer.',
+    btnDeleteAccountConfirm: 'Supprimer le compte',
+    enterPasswordConfirm: 'Entrez votre mot de passe pour confirmer',
+    accountUpdated: 'Compte mis à jour',
+    accountDeleted: 'Compte supprimé',
+    inviteCopied: "Code d'invitation copié !",
+    savedBlocks:        n => `${n} créneau${n !== 1 ? 'x' : ''} enregistré${n !== 1 ? 's' : ''}`,
+    groupCreated:        (name, code) => `Groupe « ${name} » créé ! Code : ${code}`,
+    joinedGroup:          name => `Vous avez rejoint « ${name} » !`,
+    leftGroup:            name => `Vous avez quitté « ${name} »`,
+    groupDeletedMsg:      name => `« ${name} » supprimé`,
+    removedMember:        name => `${name} a été retiré du groupe`,
+    confirmLeave:         name => `Quitter « ${name} » ? Vous pourrez rejoindre plus tard avec le code d'invitation.`,
+    confirmDeleteGroup:   name => `Supprimer « ${name} » ? Cela le supprime pour tous les membres et c'est irréversible.`,
+    confirmKick:          (member, group) => `Retirer ${member} de « ${group} » ?`,
+    membersProgress:      (withN, total) => `<strong>${withN} membre${withN !== 1 ? 's' : ''} sur ${total}</strong> ont ajouté leurs disponibilités. En attente des autres pour voir tous les chevauchements.`,
+    membersComplete:      (total, count) => `Les <strong>${total} membres</strong> ont indiqué leurs disponibilités. <strong>${count} créneau${count !== 1 ? 'x' : ''} commun${count !== 1 ? 's' : ''}</strong> trouvé${count !== 1 ? 's' : ''}.`,
+  },
+};
+
+// Known server-side error strings, translated by exact match. Anything not
+// in this list (rare validation edge cases) just falls back to English
+// rather than showing a broken/missing translation.
+const ERROR_FR = {
+  'All fields are required': 'Tous les champs sont obligatoires',
+  'Invalid email address': 'Adresse e-mail invalide',
+  'Password must be at least 6 characters': 'Le mot de passe doit contenir au moins 6 caractères',
+  'Username must be 3–30 alphanumeric characters or underscores': "Le nom d'utilisateur doit contenir 3 à 30 caractères alphanumériques ou underscores",
+  'Username or email already taken': "Ce nom d'utilisateur ou cet e-mail est déjà utilisé",
+  'Invalid username or password': "Nom d'utilisateur ou mot de passe invalide",
+  'Username and password required': "Nom d'utilisateur et mot de passe requis",
+  'Not authenticated': 'Non authentifié',
+  'Enter your password to confirm account deletion': 'Entrez votre mot de passe pour confirmer la suppression du compte',
+  'Incorrect password': 'Mot de passe incorrect',
+  'Group name is required': 'Le nom du groupe est requis',
+  'Invalid invite code': "Code d'invitation invalide",
+  'You are already in this group': 'Vous êtes déjà membre de ce groupe',
+  'Not a member of this group': "Vous n'êtes pas membre de ce groupe",
+  'group_id required': 'Groupe manquant',
+  'Group not found': 'Groupe introuvable',
+  'As the creator, delete the group instead of leaving, or wait until everyone else has left.':
+    'En tant que créateur, supprimez le groupe plutôt que de le quitter, ou attendez que tous les autres membres soient partis.',
+  'Only the group creator can delete this group': 'Seul le créateur du groupe peut le supprimer',
+  'group_id and user_id required': 'Informations manquantes',
+  'Only the group creator can remove members': 'Seul le créateur du groupe peut retirer des membres',
+  'Use "Delete group" instead of removing yourself': 'Utilisez « Supprimer le groupe » plutôt que de vous retirer vous-même',
+  'That person is not a member of this group': "Cette personne n'est pas membre de ce groupe",
+};
+
+let lang = localStorage.getItem('syncup_lang')
+  || (navigator.language?.toLowerCase().startsWith('fr') ? 'fr' : 'en');
+
+function t(key) {
+  const val = I18N[lang]?.[key];
+  return typeof val === 'string' ? val : (I18N.en[key] ?? key);
+}
+
+function tf(key, ...args) {
+  const fn = I18N[lang]?.[key] ?? I18N.en[key];
+  return typeof fn === 'function' ? fn(...args) : String(fn ?? key);
+}
+
+function currentDays() { return t('days'); }
+function currentDaysFull() { return t('daysFull'); }
+
+function translateError(msg) {
+  return (lang === 'fr' && ERROR_FR[msg]) ? ERROR_FR[msg] : msg;
+}
+
+function applyStaticTranslations() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === lang);
+  });
+}
+
+function setLanguage(newLang) {
+  if (newLang === lang) return;
+  lang = newLang;
+  localStorage.setItem('syncup_lang', lang);
+  applyStaticTranslations();
+  // Re-render whatever's currently on screen so it picks up the new language
+  if (state.user) {
+    renderAvailabilityGrid();
+    if (state.activeGroup) openGroup(state.activeGroup);
+  }
+}
 
 // ── App State ─────────────────────────────────
 let state = {
@@ -84,7 +295,7 @@ function initAuth() {
       state.user = data.user;
       enterApp();
     } else {
-      errEl.textContent = data.error;
+      errEl.textContent = translateError(data.error);
     }
   });
 
@@ -101,7 +312,7 @@ function initAuth() {
       state.user = data.user;
       enterApp();
     } else {
-      errEl.textContent = data.error;
+      errEl.textContent = translateError(data.error);
     }
   });
 }
@@ -179,7 +390,7 @@ function renderAvailabilityGrid() {
   for (let d = 0; d < 7; d++) {
     const dayLabel = document.createElement('div');
     dayLabel.className = 'grid-day-label';
-    dayLabel.textContent = DAYS[d];
+    dayLabel.textContent = currentDays()[d];
     grid.appendChild(dayLabel);
 
     for (let h = START_HOUR; h < END_HOUR; h++) {
@@ -187,7 +398,7 @@ function renderAvailabilityGrid() {
       const cell = document.createElement('div');
       cell.className = 'grid-cell' + (state.availability.has(key) ? ' selected' : '');
       cell.dataset.key = key;
-      cell.title = `${DAYS_FULL[d]}, ${formatHour(h)} – ${formatHour(h + 1)}`;
+      cell.title = `${currentDaysFull()[d]}, ${formatHour(h)} – ${formatHour(h + 1)}`;
       grid.appendChild(cell);
     }
   }
@@ -261,7 +472,7 @@ function wireDragSelect(grid) {
 async function saveAvailability() {
   const btn = document.getElementById('btn-save-availability');
   btn.disabled = true;
-  btn.textContent = 'Saving…';
+  btn.textContent = t('savingText');
 
   // Convert individual hour cells back to ranges per weekday
   const byDay = {};
@@ -288,11 +499,11 @@ async function saveAvailability() {
 
   const data = await api(API.availability, { action: 'save' }, { slots });
   btn.disabled = false;
-  btn.textContent = 'Save availability';
+  btn.textContent = t('btnSaveAvailability');
   if (data.success) {
-    toast(`Saved ${data.saved} time block${data.saved !== 1 ? 's' : ''}`);
+    toast(tf('savedBlocks', data.saved));
   } else {
-    toast(data.error, 'error');
+    toast(translateError(data.error), 'error');
   }
 }
 
@@ -317,9 +528,9 @@ async function saveAccount() {
   if (data.success) {
     state.user = data.user;
     document.getElementById('header-username').textContent = state.user.display_name;
-    toast('Account updated');
+    toast(t('accountUpdated'));
   } else {
-    errEl.textContent = data.error;
+    errEl.textContent = translateError(data.error);
   }
 }
 
@@ -328,18 +539,18 @@ async function deleteAccount() {
   const password = document.getElementById('delete-account-password').value;
   errEl.textContent = '';
 
-  if (!password) { errEl.textContent = 'Enter your password to confirm'; return; }
+  if (!password) { errEl.textContent = t('enterPasswordConfirm'); return; }
 
   const data = await api(API.auth, { action: 'delete' }, { password });
   if (data.success) {
     hideModal('modal-delete-account');
-    toast('Account deleted');
+    toast(t('accountDeleted'));
     state = { user: null, availability: new Set(), groups: [], activeGroup: null };
     document.getElementById('page-app').classList.remove('active');
     document.getElementById('page-auth').classList.add('active');
     document.getElementById('app-header').style.display = 'none';
   } else {
-    errEl.textContent = data.error;
+    errEl.textContent = translateError(data.error);
   }
 }
 
@@ -369,10 +580,10 @@ async function createGroup() {
     renderGroupsSidebar();
     hideModal('modal-create-group');
     document.getElementById('new-group-name').value = '';
-    toast(`Group "${data.group.name}" created! Code: ${data.group.invite_code}`);
+    toast(tf('groupCreated', data.group.name, data.group.invite_code));
     openGroup(state.groups[0]);
   } else {
-    toast(data.error, 'error');
+    toast(translateError(data.error), 'error');
   }
 }
 
@@ -387,18 +598,18 @@ async function joinGroup() {
     renderGroupsSidebar();
     hideModal('modal-join-group');
     document.getElementById('join-code').value = '';
-    toast(`Joined "${data.group.name}"!`);
+    toast(tf('joinedGroup', data.group.name));
     const joined = state.groups.find(g => g.id === data.group.id);
     if (joined) openGroup(joined);
   } else {
-    toast(data.error, 'error');
+    toast(translateError(data.error), 'error');
   }
 }
 
 async function leaveGroup() {
   const group = state.activeGroup;
   if (!group) return;
-  if (!confirm(`Leave "${group.name}"? You can rejoin later with the invite code.`)) return;
+  if (!confirm(tf('confirmLeave', group.name))) return;
 
   const data = await api(API.groups, { action: 'leave' }, { group_id: group.id });
   if (data.success) {
@@ -406,16 +617,16 @@ async function leaveGroup() {
     state.activeGroup = null;
     renderGroupsSidebar();
     setPanel('panel-availability');
-    toast(`Left "${group.name}"`);
+    toast(tf('leftGroup', group.name));
   } else {
-    toast(data.error, 'error');
+    toast(translateError(data.error), 'error');
   }
 }
 
 async function deleteGroup() {
   const group = state.activeGroup;
   if (!group) return;
-  if (!confirm(`Delete "${group.name}"? This removes it for every member and can't be undone.`)) return;
+  if (!confirm(tf('confirmDeleteGroup', group.name))) return;
 
   const data = await api(API.groups, { action: 'delete' }, { group_id: group.id });
   if (data.success) {
@@ -423,21 +634,21 @@ async function deleteGroup() {
     state.activeGroup = null;
     renderGroupsSidebar();
     setPanel('panel-availability');
-    toast(`"${group.name}" deleted`);
+    toast(tf('groupDeletedMsg', group.name));
   } else {
-    toast(data.error, 'error');
+    toast(translateError(data.error), 'error');
   }
 }
 
 async function kickMember(group, member) {
-  if (!confirm(`Remove ${member.display_name} from "${group.name}"?`)) return;
+  if (!confirm(tf('confirmKick', member.display_name, group.name))) return;
 
   const data = await api(API.groups, { action: 'kick' }, { group_id: group.id, user_id: member.id });
   if (data.success) {
-    toast(`Removed ${member.display_name}`);
+    toast(tf('removedMember', member.display_name));
     openGroup(group); // refresh members + overlap
   } else {
-    toast(data.error, 'error');
+    toast(translateError(data.error), 'error');
   }
 }
 
@@ -455,7 +666,7 @@ async function openGroup(group) {
 
   const codeEl = document.getElementById('group-invite-code');
   codeEl.textContent = group.invite_code;
-  codeEl.title = 'Click to copy';
+  codeEl.title = t('clickToCopy');
 
   // Creators delete the group instead of leaving it — show only the
   // button that applies to this user.
@@ -472,7 +683,7 @@ async function openGroup(group) {
     api(API.groups, { action: 'overlap', group_id: group.id }),
   ]);
 
-  if (!membersData.success) { toast(membersData.error, 'error'); return; }
+  if (!membersData.success) { toast(translateError(membersData.error), 'error'); return; }
 
   state.overlapData = overlapData;
 
@@ -497,7 +708,7 @@ function renderGroupPanel(group, members, overlapData) {
     chip.innerHTML = `
       <div class="member-avatar">${escHtml(initial)}</div>
       <span>${escHtml(m.display_name)}</span>
-      ${canKick ? `<button class="chip-remove" title="Remove from group">✕</button>` : ''}
+      ${canKick ? `<button class="chip-remove" title="${escHtml(t('removeFromGroup'))}">✕</button>` : ''}
     `;
     if (canKick) {
       chip.querySelector('.chip-remove').addEventListener('click', () => kickMember(group, m));
@@ -513,10 +724,10 @@ function renderGroupPanel(group, members, overlapData) {
     const withData = overlapData.members_with_data ?? 0;
     const total    = overlapData.total_members ?? members.length;
     if (withData < total) {
-      info.innerHTML = `<strong>${withData} of ${total} members</strong> have added their availability. Waiting on the rest to see full overlap.`;
+      info.innerHTML = tf('membersProgress', withData, total);
     } else {
       const count = overlapData.overlap?.length ?? 0;
-      info.innerHTML = `All <strong>${total} members</strong> have set their availability. Found <strong>${count} shared time block${count !== 1 ? 's' : ''}</strong>.`;
+      info.innerHTML = tf('membersComplete', total, count);
     }
     container.appendChild(info);
   }
@@ -525,9 +736,9 @@ function renderGroupPanel(group, members, overlapData) {
   const legend = document.createElement('div');
   legend.className = 'overlap-legend';
   legend.innerHTML = `
-    <div class="legend-item"><div class="legend-swatch swatch-free"></div> Not free</div>
-    <div class="legend-item"><div class="legend-swatch swatch-mine"></div> You're free</div>
-    <div class="legend-item"><div class="legend-swatch swatch-overlap"></div> Everyone's free</div>
+    <div class="legend-item"><div class="legend-swatch swatch-free"></div> ${escHtml(t('legendNotFree'))}</div>
+    <div class="legend-item"><div class="legend-swatch swatch-mine"></div> ${escHtml(t('legendYouFree'))}</div>
+    <div class="legend-item"><div class="legend-swatch swatch-overlap"></div> ${escHtml(t('legendEveryoneFree'))}</div>
   `;
   container.appendChild(legend);
 
@@ -564,7 +775,7 @@ function renderGroupPanel(group, members, overlapData) {
   for (let d = 0; d < 7; d++) {
     const dayLabel = document.createElement('div');
     dayLabel.className = 'grid-day-label';
-    dayLabel.textContent = DAYS[d];
+    dayLabel.textContent = currentDays()[d];
     grid.appendChild(dayLabel);
 
     for (let h = START_HOUR; h < END_HOUR; h++) {
@@ -572,13 +783,13 @@ function renderGroupPanel(group, members, overlapData) {
       const cell = document.createElement('div');
       if (overlapSet.has(key)) {
         cell.className = 'grid-cell overlap';
-        cell.title = `${DAYS_FULL[d]}, ${formatHour(h)} – ${formatHour(h + 1)}: everyone free!`;
+        cell.title = `${currentDaysFull()[d]}, ${formatHour(h)} – ${formatHour(h + 1)}: ${t('legendEveryoneFree').toLowerCase()}`;
       } else if (state.availability.has(key)) {
         cell.className = 'grid-cell selected';
-        cell.title = `${DAYS_FULL[d]}, ${formatHour(h)} – ${formatHour(h + 1)}: you're free`;
+        cell.title = `${currentDaysFull()[d]}, ${formatHour(h)} – ${formatHour(h + 1)}: ${t('legendYouFree').toLowerCase()}`;
       } else {
         cell.className = 'grid-cell';
-        cell.title = `${DAYS_FULL[d]}, ${formatHour(h)} – ${formatHour(h + 1)}`;
+        cell.title = `${currentDaysFull()[d]}, ${formatHour(h)} – ${formatHour(h + 1)}`;
       }
       grid.appendChild(cell);
     }
@@ -591,7 +802,7 @@ function renderGroupPanel(group, members, overlapData) {
   if (overlapData.success && overlapData.overlap && overlapData.overlap.length > 0) {
     const summary = document.createElement('div');
     summary.style.marginTop = '24px';
-    summary.innerHTML = '<h4 style="margin-bottom:12px;font-size:0.95rem;color:var(--text-mute);text-transform:uppercase;letter-spacing:0.06em;">Shared windows</h4>';
+    summary.innerHTML = `<h4 style="margin-bottom:12px;font-size:0.95rem;color:var(--text-mute);text-transform:uppercase;letter-spacing:0.06em;">${escHtml(t('sharedWindows'))}</h4>`;
     const list = document.createElement('div');
     list.style.display = 'flex';
     list.style.flexWrap = 'wrap';
@@ -600,7 +811,7 @@ function renderGroupPanel(group, members, overlapData) {
     overlapData.overlap.forEach(slot => {
       const tag = document.createElement('div');
       tag.style.cssText = 'background:rgba(0,201,167,0.12);border:1px solid rgba(0,201,167,0.3);border-radius:8px;padding:8px 14px;font-size:0.85rem;';
-      tag.innerHTML = `<strong style="color:var(--teal)">${DAYS_FULL[slot.weekday]}</strong> <span style="color:var(--text-mute)">${formatHour(slot.start_hour)} – ${formatHour(slot.end_hour)}</span>`;
+      tag.innerHTML = `<strong style="color:var(--teal)">${escHtml(currentDaysFull()[slot.weekday])}</strong> <span style="color:var(--text-mute)">${formatHour(slot.start_hour)} – ${formatHour(slot.end_hour)}</span>`;
       list.appendChild(tag);
     });
     summary.appendChild(list);
@@ -608,16 +819,18 @@ function renderGroupPanel(group, members, overlapData) {
   } else if (overlapData.success && overlapData.overlap?.length === 0 && overlapData.members_with_data >= overlapData.total_members) {
     const empty = document.createElement('div');
     empty.style.cssText = 'text-align:center;padding:32px;color:var(--text-mute);font-size:0.9rem;';
-    empty.innerHTML = '😅 No overlapping free slots found. Try expanding your availability!';
+    empty.innerHTML = `😅 ${escHtml(t('noOverlap'))}`;
     container.appendChild(empty);
   }
 }
 
 // ── Utilities ─────────────────────────────────
 function formatHour(h) {
-  if (h === 0 || h === 24) return '12 AM';
-  if (h === 12) return '12 PM';
-  return h < 12 ? `${h} AM` : `${h - 12} PM`;
+  const hh = h === 24 ? 0 : h;
+  if (lang === 'fr') return `${hh} h`;
+  if (hh === 0) return '12 AM';
+  if (hh === 12) return '12 PM';
+  return hh < 12 ? `${hh} AM` : `${hh - 12} PM`;
 }
 
 function formatHourRange(h) {
@@ -629,7 +842,7 @@ function escHtml(str) {
 }
 
 function copyToClipboard(text) {
-  navigator.clipboard.writeText(text).then(() => toast('Invite code copied!')).catch(() => {
+  navigator.clipboard.writeText(text).then(() => toast(t('inviteCopied'))).catch(() => {
     // fallback
     const ta = document.createElement('textarea');
     ta.value = text;
@@ -637,12 +850,19 @@ function copyToClipboard(text) {
     ta.select();
     document.execCommand('copy');
     document.body.removeChild(ta);
-    toast('Invite code copied!');
+    toast(t('inviteCopied'));
   });
 }
 
 // ── DOM Wiring ────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  // Apply the saved/detected language right away, before anything else, so
+  // the login screen itself shows up in the right language.
+  applyStaticTranslations();
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => setLanguage(btn.dataset.lang));
+  });
+
   // Auth
   initAuth();
 
