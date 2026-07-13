@@ -34,7 +34,9 @@ const I18N = {
     btnSignOut: 'Sign out',
     sectionMe: 'Me',
     navAvailability: 'My availability',
+    navAvailabilityShort: 'Availability',
     navAccount: 'Account',
+    navGroupsShort: 'Groups',
     sectionGroups: 'Groups',
     navNewGroup: 'New group',
     navJoinCode: 'Join with code',
@@ -53,6 +55,7 @@ const I18N = {
     legendEveryoneFree: "Everyone's free",
     sharedWindows: 'Shared windows',
     noOverlap: 'No overlapping free slots found. Try expanding your availability!',
+    noGroupsYet: 'Create a group or join with an invite code to get started.',
     accountTitle: 'Account',
     accountDesc: 'Update your info, or permanently delete your account.',
     btnSaveChanges: 'Save changes',
@@ -101,7 +104,9 @@ const I18N = {
     btnSignOut: 'Déconnexion',
     sectionMe: 'Moi',
     navAvailability: 'Mes disponibilités',
+    navAvailabilityShort: 'Disponibilités',
     navAccount: 'Compte',
+    navGroupsShort: 'Groupes',
     sectionGroups: 'Groupes',
     navNewGroup: 'Nouveau groupe',
     navJoinCode: 'Rejoindre avec un code',
@@ -120,6 +125,7 @@ const I18N = {
     legendEveryoneFree: 'Tout le monde est disponible',
     sharedWindows: 'Créneaux communs',
     noOverlap: "Aucun créneau commun trouvé. Essayez d'élargir vos disponibilités !",
+    noGroupsYet: 'Créez un groupe ou rejoignez-en un avec un code pour commencer.',
     accountTitle: 'Compte',
     accountDesc: 'Modifiez vos informations ou supprimez définitivement votre compte.',
     btnSaveChanges: 'Enregistrer les modifications',
@@ -188,10 +194,9 @@ let lang = localStorage.getItem('syncup_lang')
 
 function applyViewportSafeArea() {
   const root = document.documentElement;
-  const safeAreaBottom = window.CSS?.supports('padding-bottom: env(safe-area-inset-bottom)')
-    ? 'env(safe-area-inset-bottom)'
-    : '0px';
-  root.style.setProperty('--safe-area-bottom', safeAreaBottom);
+  const supportsSafeArea = window.CSS?.supports('padding-bottom: env(safe-area-inset-bottom)');
+  root.style.setProperty('--safe-area-bottom', supportsSafeArea ? 'env(safe-area-inset-bottom)' : '0px');
+  root.style.setProperty('--safe-area-top', supportsSafeArea ? 'env(safe-area-inset-top)' : '0px');
 }
 
 window.addEventListener('resize', applyViewportSafeArea);
@@ -225,8 +230,49 @@ function applyStaticTranslations() {
     el.textContent = t(el.dataset.i18n);
   });
   document.querySelectorAll('.lang-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.lang === lang);
+    const isActive = btn.dataset.lang === lang;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-pressed', String(isActive));
   });
+}
+
+function setAppShellVisible(visible) {
+  document.body.classList.toggle('app-active', visible);
+  const header = document.getElementById('app-header');
+  const mobileNav = document.getElementById('mobile-nav');
+  header.style.display = visible ? 'flex' : 'none';
+  mobileNav.classList.toggle('visible', visible);
+}
+
+let modalReturnFocus = null;
+
+function getFocusableElements(container) {
+  return [...container.querySelectorAll(
+    'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+  )].filter(el => el.offsetParent !== null || el === document.activeElement);
+}
+
+function showModal(id) {
+  const overlay = document.getElementById(id);
+  modalReturnFocus = document.activeElement;
+  overlay.classList.add('open');
+  overlay.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('modal-open');
+  const focusables = getFocusableElements(overlay.querySelector('.modal'));
+  (focusables[0] || overlay.querySelector('.modal-close'))?.focus();
+}
+
+function hideModal(id) {
+  const overlay = document.getElementById(id);
+  overlay.classList.remove('open');
+  overlay.setAttribute('aria-hidden', 'true');
+  if (!document.querySelector('.modal-overlay.open')) {
+    document.body.classList.remove('modal-open');
+  }
+  if (modalReturnFocus?.focus) {
+    modalReturnFocus.focus();
+    modalReturnFocus = null;
+  }
 }
 
 function setLanguage(newLang) {
@@ -266,46 +312,67 @@ async function api(endpoint, params = {}, body = null) {
 function toast(msg, type = 'success') {
   const el = document.createElement('div');
   el.className = `toast ${type}`;
+  el.setAttribute('role', type === 'error' ? 'alert' : 'status');
   el.textContent = msg;
   document.getElementById('toast-container').appendChild(el);
   setTimeout(() => el.remove(), 3500);
 }
 
-function showModal(id) { document.getElementById(id).classList.add('open'); }
-function hideModal(id) { document.getElementById(id).classList.remove('open'); }
-
 function setPanel(id) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.querySelectorAll('.mobile-nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.mobile-nav-item').forEach(n => {
+    n.classList.remove('active');
+    n.removeAttribute('aria-current');
+  });
   document.getElementById(id)?.classList.add('active');
-  const nav = document.querySelector(`[data-panel="${id}"]`);
-  if (nav) nav.classList.add('active');
+  document.querySelectorAll(`[data-panel="${id}"]`).forEach(nav => {
+    nav.classList.add('active');
+    if (nav.classList.contains('mobile-nav-item')) {
+      nav.setAttribute('aria-current', 'page');
+    }
+  });
+
+  if (id === 'panel-group') {
+    if (!state.activeGroup && state.groups.length > 0) {
+      openGroup(state.groups[0]);
+      return;
+    }
+    if (!state.activeGroup) {
+      showGroupEmptyState();
+    }
+  }
+}
+
+function showGroupEmptyState() {
+  document.getElementById('group-title').textContent = t('groupDefaultTitle');
+  document.getElementById('group-invite-code').textContent = '——';
+  document.getElementById('group-content').innerHTML = `
+    <div class="empty-state">
+      <div class="empty-icon" aria-hidden="true">👥</div>
+      <h3>${escHtml(t('groupDefaultTitle'))}</h3>
+      <p>${escHtml(t('noGroupsYet'))}</p>
+    </div>`;
 }
 
 // ── Auth ──────────────────────────────────────
-function initAuth() {
-  document.querySelectorAll('.mobile-nav-item').forEach(btn => {
-    btn.addEventListener('click', () => setPanel(btn.dataset.panel));
-  });
-
-  document.querySelectorAll('.nav-item').forEach(btn => {
-    btn.addEventListener('click', () => setPanel(btn.dataset.panel));
-  });
-
-  // Tab switching
+function switchAuthTab(target) {
   document.querySelectorAll('.auth-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      const target = tab.dataset.tab;
-      document.querySelectorAll('.auth-form').forEach(f => {
-        f.style.display = f.id === `form-${target}` ? 'block' : 'none';
-      });
-    });
+    const isActive = tab.dataset.tab === target;
+    tab.classList.toggle('active', isActive);
+    tab.setAttribute('aria-selected', String(isActive));
+  });
+  document.querySelectorAll('.auth-form').forEach(form => {
+    const isActive = form.id === `form-${target}`;
+    form.hidden = !isActive;
+  });
+}
+
+function initAuth() {
+  document.querySelectorAll('.auth-tab').forEach(tab => {
+    tab.addEventListener('click', () => switchAuthTab(tab.dataset.tab));
   });
 
-  // Register
   document.getElementById('btn-register').addEventListener('click', async () => {
     const errEl = document.getElementById('register-error');
     errEl.textContent = '';
@@ -349,7 +416,7 @@ async function checkSession() {
     enterApp();
   } else {
     document.getElementById('page-auth').classList.add('active');
-    document.getElementById('app-header').style.display = 'none';
+    setAppShellVisible(false);
   }
 }
 
@@ -358,14 +425,14 @@ async function logout() {
   state = { user: null, availability: new Set(), groups: [], activeGroup: null };
   document.getElementById('page-app').classList.remove('active');
   document.getElementById('page-auth').classList.add('active');
-  document.getElementById('app-header').style.display = 'none';
+  setAppShellVisible(false);
 }
 
 // ── App Init ──────────────────────────────────
 async function enterApp() {
   document.getElementById('page-auth').classList.remove('active');
   document.getElementById('page-app').classList.add('active');
-  document.getElementById('app-header').style.display = 'flex';
+  setAppShellVisible(true);
   document.getElementById('header-username').textContent = state.user.display_name;
   populateAccountForm();
 
@@ -423,7 +490,11 @@ function renderAvailabilityGrid() {
       const cell = document.createElement('div');
       cell.className = 'grid-cell' + (state.availability.has(key) ? ' selected' : '');
       cell.dataset.key = key;
-      cell.title = `${currentDaysFull()[d]}, ${formatHour(h)} – ${formatHour(h + 1)}`;
+      cell.setAttribute('role', 'button');
+      cell.tabIndex = 0;
+      const label = `${currentDaysFull()[d]}, ${formatHour(h)} – ${formatHour(h + 1)}`;
+      cell.setAttribute('aria-label', label);
+      cell.setAttribute('aria-pressed', String(state.availability.has(key)));
       grid.appendChild(cell);
     }
   }
@@ -452,7 +523,22 @@ function wireDragSelect(grid) {
       state.availability.delete(key);
       el.classList.remove('selected');
     }
+    el.setAttribute('aria-pressed', String(on));
   }
+
+  function toggleCell(el) {
+    if (!el) return;
+    setCell(el, !state.availability.has(el.dataset.key));
+  }
+
+  grid.addEventListener('keydown', e => {
+    const cell = e.target.closest('.grid-cell');
+    if (!cell) return;
+    if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      toggleCell(cell);
+    }
+  });
 
   grid.addEventListener('pointerdown', e => {
     const el = e.target.closest('.grid-cell');
@@ -573,26 +659,34 @@ async function deleteAccount() {
     state = { user: null, availability: new Set(), groups: [], activeGroup: null };
     document.getElementById('page-app').classList.remove('active');
     document.getElementById('page-auth').classList.add('active');
-    document.getElementById('app-header').style.display = 'none';
+    setAppShellVisible(false);
   } else {
     errEl.textContent = translateError(data.error);
   }
 }
 
 // ── Groups ────────────────────────────────────
+function buildGroupButton(g) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'group-item' + (state.activeGroup?.id === g.id ? ' active' : '');
+  btn.innerHTML = `
+    <span class="group-dot" aria-hidden="true"></span>
+    <span class="group-name">${escHtml(g.name)}</span>
+    <span class="member-badge">${g.member_count}</span>
+  `;
+  btn.addEventListener('click', () => openGroup(g));
+  return btn;
+}
+
 function renderGroupsSidebar() {
   const list = document.getElementById('group-list');
+  const mobileList = document.getElementById('mobile-group-list');
   list.innerHTML = '';
+  mobileList.innerHTML = '';
   state.groups.forEach(g => {
-    const btn = document.createElement('button');
-    btn.className = 'group-item' + (state.activeGroup?.id === g.id ? ' active' : '');
-    btn.innerHTML = `
-      <span class="group-dot"></span>
-      <span class="group-name">${escHtml(g.name)}</span>
-      <span class="member-badge">${g.member_count}</span>
-    `;
-    btn.addEventListener('click', () => openGroup(g));
-    list.appendChild(btn);
+    list.appendChild(buildGroupButton(g));
+    mobileList.appendChild(buildGroupButton(g));
   });
 }
 
@@ -691,16 +785,16 @@ async function openGroup(group) {
 
   const codeEl = document.getElementById('group-invite-code');
   codeEl.textContent = group.invite_code;
-  codeEl.title = t('clickToCopy');
+  codeEl.setAttribute('aria-label', `${t('clickToCopy')}: ${group.invite_code}`);
 
   // Creators delete the group instead of leaving it — show only the
   // button that applies to this user.
   const isOwner = Number(group.owner_id) === Number(state.user.id);
-  document.getElementById('btn-leave-group').style.display  = isOwner ? 'none' : 'inline-flex';
-  document.getElementById('btn-delete-group').style.display = isOwner ? 'inline-flex' : 'none';
+  document.getElementById('btn-leave-group').hidden  = isOwner;
+  document.getElementById('btn-delete-group').hidden = !isOwner;
 
   // Show loading
-  document.getElementById('group-content').innerHTML = '<div class="spinner"></div>';
+  document.getElementById('group-content').innerHTML = '<div class="spinner" role="status" aria-label="Loading"></div>';
 
   // Fetch members + overlap
   const [membersData, overlapData] = await Promise.all([
@@ -731,9 +825,9 @@ function renderGroupPanel(group, members, overlapData) {
     const initial = [...m.display_name][0]?.toUpperCase() ?? '?';
     const canKick = isOwner && Number(m.id) !== Number(state.user.id);
     chip.innerHTML = `
-      <div class="member-avatar">${escHtml(initial)}</div>
+      <div class="member-avatar" aria-hidden="true">${escHtml(initial)}</div>
       <span>${escHtml(m.display_name)}</span>
-      ${canKick ? `<button class="chip-remove" title="${escHtml(t('removeFromGroup'))}">✕</button>` : ''}
+      ${canKick ? `<button type="button" class="chip-remove" aria-label="${escAttr(t('removeFromGroup'))}">✕</button>` : ''}
     `;
     if (canKick) {
       chip.querySelector('.chip-remove').addEventListener('click', () => kickMember(group, m));
@@ -826,25 +920,23 @@ function renderGroupPanel(group, members, overlapData) {
   // Summary list of overlap blocks
   if (overlapData.success && overlapData.overlap && overlapData.overlap.length > 0) {
     const summary = document.createElement('div');
-    summary.style.marginTop = '24px';
-    summary.innerHTML = `<h4 style="margin-bottom:12px;font-size:0.95rem;color:var(--text-mute);text-transform:uppercase;letter-spacing:0.06em;">${escHtml(t('sharedWindows'))}</h4>`;
+    summary.className = 'overlap-summary';
+    summary.innerHTML = `<h4 class="overlap-summary-title">${escHtml(t('sharedWindows'))}</h4>`;
     const list = document.createElement('div');
-    list.style.display = 'flex';
-    list.style.flexWrap = 'wrap';
-    list.style.gap = '8px';
+    list.className = 'overlap-tags';
 
     overlapData.overlap.forEach(slot => {
       const tag = document.createElement('div');
-      tag.style.cssText = 'background:rgba(0,201,167,0.12);border:1px solid rgba(0,201,167,0.3);border-radius:8px;padding:8px 14px;font-size:0.85rem;';
-      tag.innerHTML = `<strong style="color:var(--teal)">${escHtml(currentDaysFull()[slot.weekday])}</strong> <span style="color:var(--text-mute)">${formatHour(slot.start_hour)} – ${formatHour(slot.end_hour)}</span>`;
+      tag.className = 'overlap-tag';
+      tag.innerHTML = `<strong class="overlap-tag-day">${escHtml(currentDaysFull()[slot.weekday])}</strong> <span class="overlap-tag-time">${formatHour(slot.start_hour)} – ${formatHour(slot.end_hour)}</span>`;
       list.appendChild(tag);
     });
     summary.appendChild(list);
     container.appendChild(summary);
   } else if (overlapData.success && overlapData.overlap?.length === 0 && overlapData.members_with_data >= overlapData.total_members) {
     const empty = document.createElement('div');
-    empty.style.cssText = 'text-align:center;padding:32px;color:var(--text-mute);font-size:0.9rem;';
-    empty.innerHTML = `😅 ${escHtml(t('noOverlap'))}`;
+    empty.className = 'overlap-empty';
+    empty.textContent = `😅 ${t('noOverlap')}`;
     container.appendChild(empty);
   }
 }
@@ -863,7 +955,11 @@ function formatHourRange(h) {
 }
 
 function escHtml(str) {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function escAttr(str) {
+  return escHtml(str).replace(/'/g, '&#39;');
 }
 
 function copyToClipboard(text) {
@@ -894,7 +990,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Logout
   document.getElementById('btn-logout').addEventListener('click', logout);
 
-  // Nav items
+  // Nav items (single listener set — sidebar + mobile nav)
   document.querySelectorAll('[data-panel]').forEach(btn => {
     btn.addEventListener('click', () => setPanel(btn.dataset.panel));
   });
@@ -902,21 +998,26 @@ document.addEventListener('DOMContentLoaded', () => {
   // Save availability
   document.getElementById('btn-save-availability').addEventListener('click', saveAvailability);
 
-  // Create group
-  document.getElementById('btn-open-create').addEventListener('click', () => {
+  const openCreateModal = () => {
     document.getElementById('new-group-name').value = '';
     showModal('modal-create-group');
-  });
+  };
+  const openJoinModal = () => {
+    document.getElementById('join-code').value = '';
+    showModal('modal-join-group');
+  };
+
+  // Create group
+  document.getElementById('btn-open-create').addEventListener('click', openCreateModal);
+  document.getElementById('btn-open-create-mobile').addEventListener('click', openCreateModal);
   document.getElementById('btn-create-group').addEventListener('click', createGroup);
   document.getElementById('new-group-name').addEventListener('keydown', e => {
     if (e.key === 'Enter') createGroup();
   });
 
   // Join group
-  document.getElementById('btn-open-join').addEventListener('click', () => {
-    document.getElementById('join-code').value = '';
-    showModal('modal-join-group');
-  });
+  document.getElementById('btn-open-join').addEventListener('click', openJoinModal);
+  document.getElementById('btn-open-join-mobile').addEventListener('click', openJoinModal);
   document.getElementById('btn-join-group').addEventListener('click', joinGroup);
   document.getElementById('join-code').addEventListener('keydown', e => {
     if (e.key === 'Enter') joinGroup();
@@ -940,19 +1041,37 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Enter') deleteAccount();
   });
 
-  // Modal close buttons
+  // Modal close buttons + backdrop + escape + focus trap
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
     btn.addEventListener('click', () => hideModal(btn.dataset.closeModal));
   });
   document.querySelectorAll('.modal-overlay').forEach(overlay => {
     overlay.addEventListener('click', e => {
-      if (e.target === overlay) overlay.classList.remove('open');
+      if (e.target === overlay) hideModal(overlay.id);
+    });
+    overlay.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && overlay.classList.contains('open')) {
+        hideModal(overlay.id);
+        return;
+      }
+      if (e.key !== 'Tab' || !overlay.classList.contains('open')) return;
+      const focusables = getFocusableElements(overlay.querySelector('.modal'));
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     });
   });
 
   // Copy invite code
   document.getElementById('group-invite-code').addEventListener('click', function() {
-    copyToClipboard(this.textContent);
+    copyToClipboard(this.textContent.trim());
   });
 
   // Check session on load

@@ -2,38 +2,45 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0D1B2A" />
   <title>SyncUp — Find time together</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500&display=swap" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
+
+<a class="skip-link" href="#main-content">Skip to main content</a>
 
 <div class="app">
 
   <!-- ── Header ───────────────────────────── -->
   <header class="app-header" id="app-header" style="display:none">
-    <div class="logo">Sync<span>Up</span></div>
+    <div class="logo" aria-hidden="true">Sync<span>Up</span></div>
     <div class="header-user">
-      <div class="lang-switch">
-        <button class="lang-btn" data-lang="en">EN</button>
-        <button class="lang-btn" data-lang="fr">FR</button>
+      <div class="lang-switch" role="group" aria-label="Language">
+        <button class="lang-btn" type="button" data-lang="en" aria-pressed="false">EN</button>
+        <button class="lang-btn" type="button" data-lang="fr" aria-pressed="false">FR</button>
       </div>
       <strong id="header-username"></strong>
-      <button class="btn-ghost" id="btn-logout" data-i18n="btnSignOut">Sign out</button>
+      <button class="btn-ghost" type="button" id="btn-logout" data-i18n="btnSignOut">Sign out</button>
     </div>
   </header>
 
-  <div class="mobile-nav" id="mobile-nav" aria-label="Mobile navigation">
-    <button class="mobile-nav-item active" data-panel="panel-availability">Availability</button>
-    <button class="mobile-nav-item" data-panel="panel-group">Groups</button>
-    <button class="mobile-nav-item" data-panel="panel-account">Account</button>
-  </div>
+  <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile navigation">
+    <button type="button" class="mobile-nav-item active" data-panel="panel-availability" aria-current="page" data-i18n="navAvailabilityShort">Availability</button>
+    <button type="button" class="mobile-nav-item" data-panel="panel-group" data-i18n="navGroupsShort">Groups</button>
+    <button type="button" class="mobile-nav-item" data-panel="panel-account" data-i18n="navAccount">Account</button>
+  </nav>
 
   <!-- ── Auth Page ────────────────────────── -->
   <div class="page" id="page-auth">
-    <div class="lang-switch" id="lang-switch-auth">
-      <button class="lang-btn" data-lang="en">EN</button>
-      <button class="lang-btn" data-lang="fr">FR</button>
+    <div class="auth-inner">
+    <div class="lang-switch" id="lang-switch-auth" role="group" aria-label="Language">
+      <button class="lang-btn" type="button" data-lang="en" aria-pressed="false">EN</button>
+      <button class="lang-btn" type="button" data-lang="fr" aria-pressed="false">FR</button>
     </div>
     <div class="auth-box">
       <div class="auth-hero">
@@ -41,50 +48,51 @@
         <p data-i18n="tagline">Find the times that work for everyone</p>
       </div>
 
-      <div class="auth-tabs">
-        <button class="auth-tab active" data-tab="login" data-i18n="tabSignIn">Sign in</button>
-        <button class="auth-tab" data-tab="register" data-i18n="tabCreateAccount">Create account</button>
+      <div class="auth-tabs" role="tablist" aria-label="Authentication">
+        <button type="button" class="auth-tab active" role="tab" id="tab-login" aria-selected="true" aria-controls="form-login" data-tab="login" data-i18n="tabSignIn">Sign in</button>
+        <button type="button" class="auth-tab" role="tab" id="tab-register" aria-selected="false" aria-controls="form-register" data-tab="register" data-i18n="tabCreateAccount">Create account</button>
       </div>
 
       <!-- Login form -->
-      <div id="form-login" class="auth-form">
+      <div id="form-login" class="auth-form" role="tabpanel" aria-labelledby="tab-login">
         <div class="card">
           <div class="form-group">
-            <label data-i18n="labelUsername">Username</label>
-            <input type="text" id="login-username" placeholder="your_username" autocomplete="username" />
+            <label for="login-username" data-i18n="labelUsername">Username</label>
+            <input type="text" id="login-username" placeholder="your_username" autocomplete="username" required />
           </div>
           <div class="form-group">
-            <label data-i18n="labelPassword">Password</label>
-            <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" />
+            <label for="login-password" data-i18n="labelPassword">Password</label>
+            <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" required />
           </div>
-          <div class="form-error" id="login-error"></div>
-          <button class="btn btn-primary btn-full" id="btn-login" data-i18n="btnSignIn" style="margin-top:8px">Sign in</button>
+          <div class="form-error" id="login-error" role="alert" aria-live="polite"></div>
+          <button type="button" class="btn btn-primary btn-full btn-spaced" id="btn-login" data-i18n="btnSignIn">Sign in</button>
         </div>
       </div>
 
       <!-- Register form -->
-      <div id="form-register" class="auth-form" style="display:none">
+      <div id="form-register" class="auth-form" role="tabpanel" aria-labelledby="tab-register" hidden>
         <div class="card">
           <div class="form-group">
-            <label data-i18n="labelDisplayName">Display name</label>
-            <input type="text" id="reg-name" placeholder="Alex Smith" autocomplete="name" />
+            <label for="reg-name" data-i18n="labelDisplayName">Display name</label>
+            <input type="text" id="reg-name" placeholder="Alex Smith" autocomplete="name" required />
           </div>
           <div class="form-group">
-            <label data-i18n="labelUsername">Username</label>
-            <input type="text" id="reg-username" placeholder="alex_smith" autocomplete="username" />
+            <label for="reg-username" data-i18n="labelUsername">Username</label>
+            <input type="text" id="reg-username" placeholder="alex_smith" autocomplete="username" required />
           </div>
           <div class="form-group">
-            <label data-i18n="labelEmail">Email</label>
-            <input type="email" id="reg-email" placeholder="alex@email.com" autocomplete="email" />
+            <label for="reg-email" data-i18n="labelEmail">Email</label>
+            <input type="email" id="reg-email" placeholder="alex@email.com" autocomplete="email" required />
           </div>
           <div class="form-group">
-            <label><span data-i18n="labelPassword">Password</span> <span data-i18n="minChars" style="color:var(--text-mute);font-weight:400">(min. 6 chars)</span></label>
-            <input type="password" id="reg-password" placeholder="••••••••" autocomplete="new-password" />
+            <label for="reg-password"><span data-i18n="labelPassword">Password</span> <span class="label-hint" data-i18n="minChars">(min. 6 chars)</span></label>
+            <input type="password" id="reg-password" placeholder="••••••••" autocomplete="new-password" required minlength="6" />
           </div>
-          <div class="form-error" id="register-error"></div>
-          <button class="btn btn-primary btn-full" id="btn-register" data-i18n="btnCreateAccount" style="margin-top:8px">Create account</button>
+          <div class="form-error" id="register-error" role="alert" aria-live="polite"></div>
+          <button type="button" class="btn btn-primary btn-full btn-spaced" id="btn-register" data-i18n="btnCreateAccount">Create account</button>
         </div>
       </div>
+    </div>
     </div>
   </div>
 
@@ -95,11 +103,11 @@
     <nav class="sidebar">
       <div class="sidebar-section">
         <h3 data-i18n="sectionMe">Me</h3>
-        <button class="nav-item" data-panel="panel-availability">
-          <span class="icon">🗓️</span> <span data-i18n="navAvailability">My availability</span>
+        <button type="button" class="nav-item" data-panel="panel-availability">
+          <span class="icon" aria-hidden="true">🗓️</span> <span data-i18n="navAvailability">My availability</span>
         </button>
-        <button class="nav-item" data-panel="panel-account">
-          <span class="icon">👤</span> <span data-i18n="navAccount">Account</span>
+        <button type="button" class="nav-item" data-panel="panel-account">
+          <span class="icon" aria-hidden="true">👤</span> <span data-i18n="navAccount">Account</span>
         </button>
       </div>
 
@@ -108,17 +116,17 @@
         <div class="group-list" id="group-list">
           <!-- rendered by JS -->
         </div>
-        <button class="nav-item" id="btn-open-create" style="margin-top:6px">
-          <span class="icon">＋</span> <span data-i18n="navNewGroup">New group</span>
+        <button type="button" class="nav-item" id="btn-open-create">
+          <span class="icon" aria-hidden="true">＋</span> <span data-i18n="navNewGroup">New group</span>
         </button>
-        <button class="nav-item" id="btn-open-join">
-          <span class="icon">🔗</span> <span data-i18n="navJoinCode">Join with code</span>
+        <button type="button" class="nav-item" id="btn-open-join">
+          <span class="icon" aria-hidden="true">🔗</span> <span data-i18n="navJoinCode">Join with code</span>
         </button>
       </div>
     </nav>
 
     <!-- Main content -->
-    <main class="main-content">
+    <main class="main-content" id="main-content">
 
       <!-- ── Availability Panel ── -->
       <div class="panel" id="panel-availability">
@@ -131,29 +139,39 @@
         </div>
 
         <div class="grid-container">
-          <div id="availability-grid">
-            <div class="spinner"></div>
+          <div id="availability-grid" aria-label="Weekly availability grid">
+            <div class="spinner" role="status" aria-label="Loading"></div>
           </div>
         </div>
       </div>
 
       <!-- ── Group Panel ── -->
       <div class="panel" id="panel-group">
+        <div class="mobile-group-picker" id="mobile-group-picker" aria-label="Group selection">
+          <div class="mobile-group-picker-header">
+            <h3 data-i18n="sectionGroups">Groups</h3>
+            <div class="mobile-group-actions">
+              <button type="button" class="btn btn-secondary btn-compact" id="btn-open-create-mobile" data-i18n="navNewGroup">New group</button>
+              <button type="button" class="btn btn-secondary btn-compact" id="btn-open-join-mobile" data-i18n="navJoinCode">Join with code</button>
+            </div>
+          </div>
+          <div class="group-list mobile-group-list" id="mobile-group-list"></div>
+        </div>
         <div class="panel-header">
           <div>
             <h2 id="group-title" data-i18n="groupDefaultTitle">Group</h2>
-            <div style="display:flex;align-items:center;gap:10px;margin-top:8px">
-              <span style="font-size:0.82rem;color:var(--text-mute)" data-i18n="inviteCodeLabel">Invite code:</span>
-              <span class="invite-code" id="group-invite-code">——</span>
+            <div class="invite-code-row">
+              <span class="invite-code-label" data-i18n="inviteCodeLabel">Invite code:</span>
+              <button type="button" class="invite-code" id="group-invite-code" aria-label="Copy invite code">——</button>
             </div>
           </div>
-          <div style="display:flex;gap:10px">
-            <button class="btn btn-secondary" id="btn-leave-group" data-i18n="btnLeaveGroup">Leave group</button>
-            <button class="btn btn-danger" id="btn-delete-group" data-i18n="btnDeleteGroup" style="display:none">Delete group</button>
+          <div class="panel-header-actions">
+            <button type="button" class="btn btn-secondary" id="btn-leave-group" data-i18n="btnLeaveGroup">Leave group</button>
+            <button type="button" class="btn btn-danger" id="btn-delete-group" data-i18n="btnDeleteGroup" hidden>Delete group</button>
           </div>
         </div>
-        <div id="group-content">
-          <div class="spinner"></div>
+        <div id="group-content" aria-live="polite">
+          <div class="spinner" role="status" aria-label="Loading"></div>
         </div>
       </div>
 
@@ -166,30 +184,30 @@
           </div>
         </div>
 
-        <div class="card" style="max-width:440px">
+        <div class="card card-narrow">
           <div class="form-group">
-            <label data-i18n="labelDisplayName">Display name</label>
+            <label for="account-name" data-i18n="labelDisplayName">Display name</label>
             <input type="text" id="account-name" autocomplete="name" />
           </div>
           <div class="form-group">
-            <label data-i18n="labelUsername">Username</label>
+            <label for="account-username" data-i18n="labelUsername">Username</label>
             <input type="text" id="account-username" autocomplete="username" />
           </div>
           <div class="form-group">
-            <label data-i18n="labelEmail">Email</label>
+            <label for="account-email" data-i18n="labelEmail">Email</label>
             <input type="email" id="account-email" autocomplete="email" />
           </div>
-          <div class="form-error" id="account-error"></div>
-          <button class="btn btn-primary" id="btn-save-account" data-i18n="btnSaveChanges" style="margin-top:8px">Save changes</button>
+          <div class="form-error" id="account-error" role="alert" aria-live="polite"></div>
+          <button type="button" class="btn btn-primary btn-spaced" id="btn-save-account" data-i18n="btnSaveChanges">Save changes</button>
         </div>
 
-        <div class="card" style="max-width:440px;margin-top:20px;border-color:rgba(255,107,107,0.3)">
-          <h4 data-i18n="dangerZone" style="margin-bottom:6px">Danger zone</h4>
-          <p data-i18n="dangerZoneDesc" style="color:var(--text-mute);font-size:0.85rem;margin-bottom:14px">
+        <div class="card card-narrow card-danger">
+          <h4 data-i18n="dangerZone">Danger zone</h4>
+          <p class="danger-zone-desc" data-i18n="dangerZoneDesc">
             Deleting your account removes your availability and group memberships for good.
             Any group you created is handed to another member, or deleted if you're the only one in it.
           </p>
-          <button class="btn btn-danger" id="btn-delete-account" data-i18n="btnDeleteAccount">Delete my account</button>
+          <button type="button" class="btn btn-danger" id="btn-delete-account" data-i18n="btnDeleteAccount">Delete my account</button>
         </div>
       </div>
 
@@ -201,60 +219,60 @@
 <!-- ── Modals ──────────────────────────────── -->
 
 <!-- Create group -->
-<div class="modal-overlay" id="modal-create-group">
-  <div class="modal">
-    <button class="modal-close" data-close-modal="modal-create-group">✕</button>
-    <h3 data-i18n="modalCreateGroupTitle">Create a group</h3>
+<div class="modal-overlay" id="modal-create-group" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-create-group-title">
+    <button type="button" class="modal-close" data-close-modal="modal-create-group" aria-label="Close dialog">✕</button>
+    <h3 id="modal-create-group-title" data-i18n="modalCreateGroupTitle">Create a group</h3>
     <div class="form-group">
-      <label data-i18n="labelGroupName">Group name</label>
+      <label for="new-group-name" data-i18n="labelGroupName">Group name</label>
       <input type="text" id="new-group-name" placeholder="Weekend crew, Book club…" />
     </div>
     <div class="modal-actions">
-      <button class="btn btn-secondary" data-close-modal="modal-create-group" data-i18n="btnCancel">Cancel</button>
-      <button class="btn btn-primary" id="btn-create-group" data-i18n="btnCreateGroup">Create group</button>
+      <button type="button" class="btn btn-secondary" data-close-modal="modal-create-group" data-i18n="btnCancel">Cancel</button>
+      <button type="button" class="btn btn-primary" id="btn-create-group" data-i18n="btnCreateGroup">Create group</button>
     </div>
   </div>
 </div>
 
 <!-- Join group -->
-<div class="modal-overlay" id="modal-join-group">
-  <div class="modal">
-    <button class="modal-close" data-close-modal="modal-join-group">✕</button>
-    <h3 data-i18n="modalJoinGroupTitle">Join a group</h3>
+<div class="modal-overlay" id="modal-join-group" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-join-group-title">
+    <button type="button" class="modal-close" data-close-modal="modal-join-group" aria-label="Close dialog">✕</button>
+    <h3 id="modal-join-group-title" data-i18n="modalJoinGroupTitle">Join a group</h3>
     <div class="form-group">
-      <label data-i18n="labelInviteCode">Invite code</label>
-      <input type="text" id="join-code" placeholder="ABCD1234" style="text-transform:uppercase;letter-spacing:2px" maxlength="12" />
+      <label for="join-code" data-i18n="labelInviteCode">Invite code</label>
+      <input type="text" id="join-code" class="input-invite-code" placeholder="ABCD1234" maxlength="12" autocapitalize="characters" />
     </div>
     <div class="modal-actions">
-      <button class="btn btn-secondary" data-close-modal="modal-join-group" data-i18n="btnCancel">Cancel</button>
-      <button class="btn btn-primary" id="btn-join-group" data-i18n="btnJoinGroup">Join group</button>
+      <button type="button" class="btn btn-secondary" data-close-modal="modal-join-group" data-i18n="btnCancel">Cancel</button>
+      <button type="button" class="btn btn-primary" id="btn-join-group" data-i18n="btnJoinGroup">Join group</button>
     </div>
   </div>
 </div>
 
 <!-- Delete account -->
-<div class="modal-overlay" id="modal-delete-account">
-  <div class="modal">
-    <button class="modal-close" data-close-modal="modal-delete-account">✕</button>
-    <h3 data-i18n="modalDeleteAccountTitle">Delete your account?</h3>
-    <p data-i18n="deleteAccountWarning" style="color:var(--text-mute);font-size:0.88rem;margin-bottom:16px">
+<div class="modal-overlay" id="modal-delete-account" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-delete-account-title">
+    <button type="button" class="modal-close" data-close-modal="modal-delete-account" aria-label="Close dialog">✕</button>
+    <h3 id="modal-delete-account-title" data-i18n="modalDeleteAccountTitle">Delete your account?</h3>
+    <p class="modal-warning" data-i18n="deleteAccountWarning">
       This permanently deletes your account and can't be undone. Enter your password to confirm.
     </p>
     <div class="form-group">
-      <label data-i18n="labelPassword">Password</label>
+      <label for="delete-account-password" data-i18n="labelPassword">Password</label>
       <input type="password" id="delete-account-password" placeholder="••••••••" autocomplete="current-password" />
     </div>
-    <div class="form-error" id="delete-account-error"></div>
+    <div class="form-error" id="delete-account-error" role="alert" aria-live="polite"></div>
     <div class="modal-actions">
-      <button class="btn btn-secondary" data-close-modal="modal-delete-account" data-i18n="btnCancel">Cancel</button>
-      <button class="btn btn-danger" id="btn-confirm-delete-account" data-i18n="btnDeleteAccountConfirm">Delete account</button>
+      <button type="button" class="btn btn-secondary" data-close-modal="modal-delete-account" data-i18n="btnCancel">Cancel</button>
+      <button type="button" class="btn btn-danger" id="btn-confirm-delete-account" data-i18n="btnDeleteAccountConfirm">Delete account</button>
     </div>
   </div>
 </div>
 
 <!-- ── Toast container ── -->
-<div class="toast-container" id="toast-container"></div>
+<div class="toast-container" id="toast-container" aria-live="polite" aria-atomic="true"></div>
 
-<script src="js/app.js"></script>
+<script src="js/app.js" defer></script>
 </body>
 </html>
