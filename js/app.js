@@ -186,6 +186,18 @@ const ERROR_FR = {
 let lang = localStorage.getItem('syncup_lang')
   || (navigator.language?.toLowerCase().startsWith('fr') ? 'fr' : 'en');
 
+function applyViewportSafeArea() {
+  const root = document.documentElement;
+  const safeAreaBottom = window.CSS?.supports('padding-bottom: env(safe-area-inset-bottom)')
+    ? 'env(safe-area-inset-bottom)'
+    : '0px';
+  root.style.setProperty('--safe-area-bottom', safeAreaBottom);
+}
+
+window.addEventListener('resize', applyViewportSafeArea);
+window.addEventListener('orientationchange', applyViewportSafeArea);
+applyViewportSafeArea();
+
 function getTranslation(key) {
   return I18N[lang]?.[key] ?? I18N.en[key];
 }
