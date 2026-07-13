@@ -277,6 +277,7 @@ function hideModal(id) { document.getElementById(id).classList.remove('open'); }
 function setPanel(id) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.mobile-nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById(id)?.classList.add('active');
   const nav = document.querySelector(`[data-panel="${id}"]`);
   if (nav) nav.classList.add('active');
@@ -284,6 +285,14 @@ function setPanel(id) {
 
 // ── Auth ──────────────────────────────────────
 function initAuth() {
+  document.querySelectorAll('.mobile-nav-item').forEach(btn => {
+    btn.addEventListener('click', () => setPanel(btn.dataset.panel));
+  });
+
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.addEventListener('click', () => setPanel(btn.dataset.panel));
+  });
+
   // Tab switching
   document.querySelectorAll('.auth-tab').forEach(tab => {
     tab.addEventListener('click', () => {
