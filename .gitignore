@@ -5,7 +5,7 @@ node_modules/
 # Environment & config (keep secrets safe!)
 .env
 config.local.php
-api/config.php
+api/config.local.php
 
 # OS files
 .DS_Store
@@ -23,9 +23,9 @@ desktop.ini
 error_log
 php_errors.log
 
-# Database dumps (don't expose your data)
-*.sql
-*.sqlite
+# Local DB dumps only — schema.sql itself IS tracked (needed for setup)
+/dumps/*.sql
+!schema.sql
 
 # Compiled/cache
 *.cache

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <title>Reset your password — SyncUp</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="page active" style="align-items:center;justify-content:center;padding:24px;">
+    <div class="auth-inner">
+      <div class="auth-hero">
+        <div class="logo-big" aria-hidden="true">Sync<span>Up</span></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:16px;">Choose a new password</h3>
+        <div class="form-group">
+          <label for="new-password">New password (min. 8 chars)</label>
+          <input type="password" id="new-password" minlength="8" required />
+        </div>
+        <div class="form-error" id="reset-error" role="alert" aria-live="polite"></div>
+        <div class="form-hint" id="reset-success" role="status" aria-live="polite"></div>
+        <button type="button" class="btn btn-primary btn-full btn-spaced" id="btn-reset">Set new password</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+async function csrf() {
+  const res = await fetch('api/auth.php?action=csrf');
+  const data = await res.json();
+  return data.token;
+}
+
+document.getElementById('btn-reset').addEventListener('click', async () => {
+  const errEl = document.getElementById('reset-error');
+  const okEl  = document.getElementById('reset-success');
+  errEl.textContent = ''; okEl.textContent = '';
+
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+  const password = document.getElementById('new-password').value;
+
+  if (!token) { errEl.textContent = 'Missing or invalid reset link.'; return; }
+  if (password.length < 8) { errEl.textContent = 'Password must be at least 8 characters.'; return; }
+
+  const token_csrf = await csrf();
+  const res = await fetch('api/auth.php?action=reset-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': token_csrf },
+    body: JSON.stringify({ token, password }),
+  });
+  const data = await res.json();
+  if (data.success) {
+    okEl.textContent = 'Password updated! You can close this tab and sign in.';
+    document.getElementById('btn-reset').disabled = true;
+  } else {
+    errEl.textContent = data.error || 'Something went wrong.';
+  }
+});
+</script>
+</body>
+</html>

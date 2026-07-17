@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0D1B2A" />
   <title>SyncUp — Find time together</title>
+
+  <!-- SEO / link-preview metadata -->
+  <meta name="description" content="SyncUp helps you and your friends find shared free time in seconds. Mark your availability, share an invite code, and instantly see when everyone's free." />
+  <meta property="og:title" content="SyncUp — Find time together" />
+  <meta property="og:description" content="Mark your availability, share an invite code, and instantly see when everyone's free." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="canonical" href="https://yourdomain.com/" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500&display=swap" />
@@ -13,6 +22,7 @@
 <body>
 
 <a class="skip-link" href="#main-content">Skip to main content</a>
+<h1 class="visually-hidden">SyncUp — Find time together</h1>
 
 <div class="app">
 
@@ -44,7 +54,7 @@
     </div>
     <div class="auth-box">
       <div class="auth-hero">
-        <div class="logo-big">Sync<span>Up</span></div>
+        <div class="logo-big" aria-hidden="true">Sync<span>Up</span></div>
         <p data-i18n="tagline">Find the times that work for everyone</p>
       </div>
 
@@ -66,6 +76,7 @@
           </div>
           <div class="form-error" id="login-error" role="alert" aria-live="polite"></div>
           <button type="button" class="btn btn-primary btn-full btn-spaced" id="btn-login" data-i18n="btnSignIn">Sign in</button>
+          <button type="button" class="btn-link" id="btn-forgot-password" data-i18n="forgotPassword">Forgot password?</button>
         </div>
       </div>
 
@@ -85,9 +96,10 @@
             <input type="email" id="reg-email" placeholder="alex@email.com" autocomplete="email" required />
           </div>
           <div class="form-group">
-            <label for="reg-password"><span data-i18n="labelPassword">Password</span> <span class="label-hint" data-i18n="minChars">(min. 6 chars)</span></label>
-            <input type="password" id="reg-password" placeholder="••••••••" autocomplete="new-password" required minlength="6" />
+            <label for="reg-password"><span data-i18n="labelPassword">Password</span> <span class="label-hint" data-i18n="minChars">(min. 8 chars)</span></label>
+            <input type="password" id="reg-password" placeholder="••••••••" autocomplete="new-password" required minlength="8" />
           </div>
+          <p class="form-hint">Your timezone is detected automatically and can be changed later in Account.</p>
           <div class="form-error" id="register-error" role="alert" aria-live="polite"></div>
           <button type="button" class="btn btn-primary btn-full btn-spaced" id="btn-register" data-i18n="btnCreateAccount">Create account</button>
         </div>
@@ -99,7 +111,6 @@
   <!-- ── App Page ──────────────────────────── -->
   <div class="page" id="page-app">
 
-    <!-- Sidebar -->
     <nav class="sidebar">
       <div class="sidebar-section">
         <h3 data-i18n="sectionMe">Me</h3>
@@ -113,9 +124,7 @@
 
       <div class="sidebar-section">
         <h3 data-i18n="sectionGroups">Groups</h3>
-        <div class="group-list" id="group-list">
-          <!-- rendered by JS -->
-        </div>
+        <div class="group-list" id="group-list"></div>
         <button type="button" class="nav-item" id="btn-open-create">
           <span class="icon" aria-hidden="true">＋</span> <span data-i18n="navNewGroup">New group</span>
         </button>
@@ -125,7 +134,6 @@
       </div>
     </nav>
 
-    <!-- Main content -->
     <main class="main-content" id="main-content">
 
       <!-- ── Availability Panel ── -->
@@ -133,9 +141,12 @@
         <div class="panel-header">
           <div>
             <h2 data-i18n="availTitle">My availability</h2>
-            <p data-i18n="availDesc">Click cells to mark when you're free (6 AM – 11 PM). Your friends will see overlaps.</p>
+            <p data-i18n="availDesc">Click cells to mark when you're free. Times shown in your local timezone.</p>
           </div>
-          <button class="btn btn-primary" id="btn-save-availability" data-i18n="btnSaveAvailability">Save availability</button>
+          <div class="panel-header-col">
+            <button class="btn btn-primary" id="btn-save-availability" data-i18n="btnSaveAvailability">Save availability</button>
+            <span class="autosave-status" id="autosave-status" role="status" aria-live="polite"></span>
+          </div>
         </div>
 
         <div class="grid-container">
@@ -170,6 +181,7 @@
             <button type="button" class="btn btn-danger" id="btn-delete-group" data-i18n="btnDeleteGroup" hidden>Delete group</button>
           </div>
         </div>
+        <p class="hint-inline">Use the ⇄ icon next to a member to transfer ownership to them.</p>
         <div id="group-content" aria-live="polite">
           <div class="spinner" role="status" aria-label="Loading"></div>
         </div>
@@ -197,6 +209,10 @@
             <label for="account-email" data-i18n="labelEmail">Email</label>
             <input type="email" id="account-email" autocomplete="email" />
           </div>
+          <div class="form-group">
+            <label for="account-timezone" data-i18n="labelTimezone">Timezone</label>
+            <select id="account-timezone"></select>
+          </div>
           <div class="form-error" id="account-error" role="alert" aria-live="polite"></div>
           <button type="button" class="btn btn-primary btn-spaced" id="btn-save-account" data-i18n="btnSaveChanges">Save changes</button>
         </div>
@@ -218,14 +234,13 @@
 
 <!-- ── Modals ──────────────────────────────── -->
 
-<!-- Create group -->
 <div class="modal-overlay" id="modal-create-group" aria-hidden="true">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-create-group-title">
     <button type="button" class="modal-close" data-close-modal="modal-create-group" aria-label="Close dialog">✕</button>
     <h3 id="modal-create-group-title" data-i18n="modalCreateGroupTitle">Create a group</h3>
     <div class="form-group">
       <label for="new-group-name" data-i18n="labelGroupName">Group name</label>
-      <input type="text" id="new-group-name" placeholder="Weekend crew, Book club…" />
+      <input type="text" id="new-group-name" placeholder="Weekend crew, Book club…" maxlength="100" />
     </div>
     <div class="modal-actions">
       <button type="button" class="btn btn-secondary" data-close-modal="modal-create-group" data-i18n="btnCancel">Cancel</button>
@@ -234,7 +249,6 @@
   </div>
 </div>
 
-<!-- Join group -->
 <div class="modal-overlay" id="modal-join-group" aria-hidden="true">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-join-group-title">
     <button type="button" class="modal-close" data-close-modal="modal-join-group" aria-label="Close dialog">✕</button>
@@ -250,7 +264,6 @@
   </div>
 </div>
 
-<!-- Delete account -->
 <div class="modal-overlay" id="modal-delete-account" aria-hidden="true">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-delete-account-title">
     <button type="button" class="modal-close" data-close-modal="modal-delete-account" aria-label="Close dialog">✕</button>
@@ -270,9 +283,27 @@
   </div>
 </div>
 
-<!-- ── Toast container ── -->
+<!-- Forgot / reset password -->
+<div class="modal-overlay" id="modal-reset-password" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-reset-title">
+    <button type="button" class="modal-close" data-close-modal="modal-reset-password" aria-label="Close dialog">✕</button>
+    <h3 id="modal-reset-title" data-i18n="resetTitle">Reset your password</h3>
+    <p class="modal-warning" data-i18n="resetDesc">Enter your email and we'll send a reset link.</p>
+    <div class="form-group">
+      <label for="reset-email" data-i18n="labelEmail">Email</label>
+      <input type="email" id="reset-email" placeholder="alex@email.com" autocomplete="email" />
+    </div>
+    <div class="form-hint" id="reset-request-msg" role="status" aria-live="polite"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" data-close-modal="modal-reset-password" data-i18n="btnCancel">Cancel</button>
+      <button type="button" class="btn btn-primary" id="btn-send-reset" data-i18n="btnSendReset">Send reset link</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast-container" id="toast-container" aria-live="polite" aria-atomic="true"></div>
 
+<script src="js/timezone.js" defer></script>
 <script src="js/app.js" defer></script>
 </body>
 </html>

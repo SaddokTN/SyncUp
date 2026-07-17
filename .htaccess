@@ -1,0 +1,25 @@
+# SyncUp — Apache hardening & performance
+Options -Indexes -MultiViews
+
+# Force HTTPS (remove if terminating TLS at a load balancer that already does this)
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Never serve dotfiles, .env, .sql dumps, or config if misplaced in webroot
+<FilesMatch "^(\.env.*|.*\.sql|config\.local\.php)$">
+  Require all denied
+</FilesMatch>
+
+# Static asset caching (pair with cache-busting query params or hashed filenames on deploy)
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 30 days"
+  ExpiresByType application/javascript "access plus 30 days"
+  ExpiresByType image/svg+xml "access plus 30 days"
+  ExpiresByType image/png "access plus 30 days"
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json
+</IfModule>
