@@ -40,8 +40,12 @@ function env(string $key, ?string $default = null): ?string {
     return $GLOBALS['__env'][$key] ?? $default;
 }
 
-const IS_PRODUCTION = false; // flip via env('APP_ENV') === 'production' in real deploys
-$APP_ENV = env('APP_ENV', 'production');
+// Defaults to "development" so a fresh checkout with no .env yet still
+// runs over plain HTTP without silently locking out session cookies
+// (secure cookies require HTTPS — see the session config below).
+// Real deployments MUST set APP_ENV=production in .env; don't rely on
+// this fallback for production security.
+$APP_ENV = env('APP_ENV', 'development');
 
 // ---------------------------------------------------------------
 // 2. Security headers — sent on every API response.

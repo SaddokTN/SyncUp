@@ -6,12 +6,11 @@ require_once __DIR__ . '/config.php';
 header('Content-Type: application/json');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit;
 
-$action = $_GET['action'] ?? '';
+// requireCsrf() is itself a no-op for GET/OPTIONS, so it's safe to call
+// unconditionally here rather than re-deriving which actions are "safe".
+requireCsrf();
 
-// CSRF is required for every mutating action. `csrf` and `me` are safe GETs.
-if (!in_array($action, ['csrf', 'me'], true)) {
-    requireCsrf();
-}
+$action = $_GET['action'] ?? '';
 
 switch ($action) {
     case 'csrf':            jsonResponse(['success' => true, 'token' => csrfToken()]); break;
@@ -34,6 +33,14 @@ function validTimezone(string $tz): bool {
     return in_array($tz, timezone_identifiers_list(), true);
 }
 
+// bcrypt silently ignores bytes beyond 72 — validating this explicitly
+// means a user never ends up with a password shorter (in effect) than
+// what they typed, and never wonders why a long password "worked" once
+// truncated but the full string doesn't match on re-entry elsewhere.
+function validPasswordLength(string $password): bool {
+    return strlen($password) >= 8 && strlen($password) <= 72;
+}
+
 function handleRegister(): void {
     $body         = jsonBody();
     $username     = trim($body['username'] ?? '');
@@ -48,8 +55,17 @@ function handleRegister(): void {
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         jsonError('Invalid email address');
     }
+    if (mb_strlen($email) > 190) {
+        jsonError('Email address is too long');
+    }
+    if (mb_strlen($display_name) > 100) {
+        jsonError('Display name is too long');
+    }
     if (strlen($password) < 8) {
         jsonError('Password must be at least 8 characters');
+    }
+    if (strlen($password) > 72) {
+        jsonError('Password must be at most 72 characters');
     }
     if (!validUsername($username)) {
         jsonError('Username must be 3–30 alphanumeric characters or underscores');
@@ -180,6 +196,8 @@ function handleUpdate(): void {
 
     if (!$username || !$display_name || !$email) jsonError('All fields are required');
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) jsonError('Invalid email address');
+    if (mb_strlen($email) > 190) jsonError('Email address is too long');
+    if (mb_strlen($display_name) > 100) jsonError('Display name is too long');
     if (!validUsername($username)) jsonError('Username must be 3–30 alphanumeric characters or underscores');
     if (!validTimezone($timezone)) jsonError('Unrecognized timezone');
 
@@ -298,6 +316,7 @@ function handleResetPassword(): void {
 
     if (!$token || !$password) jsonError('Token and new password are required');
     if (strlen($password) < 8) jsonError('Password must be at least 8 characters');
+    if (strlen($password) > 72) jsonError('Password must be at most 72 characters');
 
     $tokenHash = hash('sha256', $token);
     $db = db();

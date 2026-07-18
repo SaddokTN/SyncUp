@@ -122,6 +122,9 @@ const ERROR_FR = {
   'All fields are required': 'Tous les champs sont obligatoires',
   'Invalid email address': 'Adresse e-mail invalide',
   'Password must be at least 8 characters': 'Le mot de passe doit contenir au moins 8 caractères',
+  'Password must be at most 72 characters': 'Le mot de passe doit contenir au plus 72 caractères',
+  'Email address is too long': "L'adresse e-mail est trop longue",
+  'Display name is too long': 'Le nom affiché est trop long',
   'Username must be 3–30 alphanumeric characters or underscores': "Le nom d'utilisateur doit contenir 3 à 30 caractères alphanumériques ou underscores",
   'Username or email already taken': "Ce nom d'utilisateur ou cet e-mail est déjà utilisé",
   'Invalid username or password': "Nom d'utilisateur ou mot de passe invalide",
@@ -954,7 +957,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('group-invite-code').addEventListener('click', function () { copyToClipboard(this.textContent.trim()); });
-  document.getElementById('btn-send-reset')?.addEventListener('click', () => {}); // wired above in initAuth
 
   checkSession();
 });
