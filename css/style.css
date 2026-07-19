@@ -403,3 +403,30 @@ body.app-active .mobile-nav.visible { display: grid; grid-template-columns: repe
   .grid-cell.overlap::after { animation: none; opacity: 0.5; }
   .skeleton-block { animation: none; }
 }
+
+/* ── Copyright note ──────────────────────────
+   Simple, transparent, non-intrusive. Bottom-right on desktop/laptop,
+   bottom-center on mobile. Sits below the mobile nav / toast layer so it
+   never blocks interactive controls. */
+.copyright-note {
+  position: fixed;
+  left: 50%;
+  bottom: calc(6px + var(--safe-area-bottom, 0px));
+  transform: translateX(-50%);
+  background: transparent;
+  color: var(--text-mute);
+  font-size: 0.72rem;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+}
+
+@media (min-width: 900px) {
+  .copyright-note {
+    left: auto;
+    right: 14px;
+    bottom: 10px;
+    transform: none;
+  }
+}
